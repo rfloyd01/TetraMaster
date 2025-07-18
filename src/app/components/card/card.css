@@ -1,0 +1,93 @@
+.card {
+    position: relative;
+    width: 200px;
+    height: 300px;
+    border: 1px;
+    border-color: black;
+    border-style: solid;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.stat-row {
+    height: 50px;
+    display: flex;
+}
+
+.stat {
+    display: flex;
+    height: 30px;
+    width: 30px;
+    align-items: center;
+    justify-content: center;
+    font-size: larger;
+}
+
+.arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+}
+
+/* Top (North) */
+.arrow.n {
+    top: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Top Right (North-East) */
+.arrow.ne {
+    top: -2px;
+    right: -7px;
+    transform: rotate(45deg);
+}
+
+/* Right (East) */
+.arrow.e {
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%) rotate(90deg);
+}
+
+/* Bottom Right (South-East) */
+.arrow.se {
+    bottom: -2px;
+    right: -7px;
+    transform: rotate(135deg);
+}
+
+/* Bottom (South) */
+.arrow.s {
+    bottom: 0px;
+    left: 50%;
+    transform: translateX(-50%) rotate(180deg);
+}
+
+/* Bottom Left (South-West) */
+.arrow.sw {
+    bottom: -2px;
+    left: -7px;
+    transform: rotate(225deg);
+}
+
+/* Left (West) */
+.arrow.w {
+    top: 50%;
+    left: -5px;
+    transform: translateY(-50%) rotate(-90deg);
+}
+
+/* Top Left (North-West) */
+.arrow.nw {
+    top: -2px;
+    left: -7px;
+    transform: rotate(-45deg);
+}
+
+.active {
+    border-bottom: 10px solid goldenrod;
+}

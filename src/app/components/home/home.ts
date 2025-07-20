@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Card } from '../card/card';
+import { AttackStyle } from '../../util/card-types';
 
 @Component({
   selector: 'app-home',
@@ -8,5 +9,5 @@ import { Card } from '../card/card';
   styleUrl: './home.css'
 })
 export class Home {
-
+  attackStyle = AttackStyle
 }

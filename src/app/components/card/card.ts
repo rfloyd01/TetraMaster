@@ -9,7 +9,8 @@ import { AttackStyle } from '../../util/card-types';
 })
 export class Card implements OnInit, AfterViewInit {
   
-  arrows: number = 0b11111111; //8 bit number representing the arrows on the card
+  @Input()
+  activeArrows: number = 0b11111111; //8 bit number representing the arrows on the card
 
   @Input()
   id: number = 0; //unique number to distinguish from other cards on map
@@ -17,10 +18,16 @@ export class Card implements OnInit, AfterViewInit {
   @Input()
   attackPower: number = 0;
   
+  @Input()
   attackStyle: AttackStyle = AttackStyle.FLEXIBLE;
+
+  @Input()
   physicalDefense: number = 100;
+
+  @Input()
   magicalDefense: number = 21;
 
+  @Input()
   cardType: number = 0; //0 = wolf, 1 = goblin ... 67 = genji, etc.
 
   displayAttackPower: string = '0';
@@ -39,7 +46,7 @@ export class Card implements OnInit, AfterViewInit {
     let cardHTMLElementChildren = document.getElementById('card-' + this.id)?.children;
     let shifter = 1;
     for (let i = 0; i < 8; i++) {
-      if (shifter & this.arrows) {
+      if (shifter & this.activeArrows) {
         cardHTMLElementChildren?.item(i)?.classList.add('active');
       }
 

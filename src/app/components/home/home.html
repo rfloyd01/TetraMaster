@@ -1,5 +1,12 @@
-<div>
-    <app-card [attackPower]="10" [id]="1"></app-card>
-    <app-card [attackPower]="50" [id]="2"></app-card>
-    <app-card [attackPower]="200" [id]="3"></app-card>
+<div class="card-grid">
+    <div class="grid-row">
+        <app-card [id]="1" [attackPower]="10" [attackStyle]="attackStyle.ASSUALT" [physicalDefense]="24" [magicalDefense]="15" [activeArrows]="26"></app-card>
+        <app-card [id]="2" [attackPower]="20" [attackStyle]="attackStyle.PHYSICAL" [physicalDefense]="1" [magicalDefense]="150" [activeArrows]="250"></app-card>
+        <app-card [id]="3" [attackPower]="50" [attackStyle]="attackStyle.MAGICAL" [physicalDefense]="204" [magicalDefense]="65" [activeArrows]="132"></app-card>
+    </div>
+    <div class="grid-row">
+        <app-card [id]="4" [attackPower]="10" [attackStyle]="attackStyle.ASSUALT" [physicalDefense]="24" [magicalDefense]="15" [activeArrows]="26"></app-card>
+        <app-card [id]="5" [attackPower]="20" [attackStyle]="attackStyle.PHYSICAL" [physicalDefense]="1" [magicalDefense]="150" [activeArrows]="250"></app-card>
+        <app-card [id]="6" [attackPower]="50" [attackStyle]="attackStyle.MAGICAL" [physicalDefense]="204" [magicalDefense]="65" [activeArrows]="132"></app-card>
+    </div>
 </div>

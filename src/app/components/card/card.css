@@ -8,6 +8,11 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.card:hover {
+    background-color: cornflowerblue;
 }
 
 .stat-row {
@@ -22,6 +27,36 @@
     align-items: center;
     justify-content: center;
     font-size: larger;
+}
+
+.border {
+    position: absolute;
+    background-color: grey;
+    z-index: -1;
+}
+
+.border.n {
+    width: 200px;
+    height: 10px;
+    top: 0px;
+}
+
+.border.e {
+    width: 10px;
+    height: 300px;
+    right: 0px;
+}
+
+.border.s {
+    width: 200px;
+    height: 10px;
+    bottom: 0px;
+}
+
+.border.w {
+    width: 10px;
+    height: 300px;
+    left: 0px;
 }
 
 .arrow {

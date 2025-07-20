@@ -1,0 +1,7 @@
+.grid-row {
+    display:flex;
+}
+
+.grid-row app-card {
+    margin: 5px;
+}

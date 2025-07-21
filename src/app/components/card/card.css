@@ -1,7 +1,15 @@
 .card {
-    position: relative;
     height: 22vh;
     aspect-ratio: 1 / 1.2; 
+    border: 1px;
+    border-color: black;
+    border-style: solid;
+}
+
+.card-stats-container {
+    position: relative;
+    height: 100%;
+    width: 100%;
     border: 1px;
     border-color: black;
     border-style: solid;
@@ -19,12 +27,24 @@
     background-color: red;
 }
 
+.blocked {
+    background-color: #444444;
+}
+
+.empty {
+    background-color: lightgray;
+}
+
 .card.friend:hover {
     background-color: cornflowerblue;
 }
 
 .card.enemy:hover {
     background-color: rgb(227, 111, 100)
+}
+
+.card.empty:hover {
+    background-color: lightgreen;
 }
 
 .stat-row {

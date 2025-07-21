@@ -1,9 +1,9 @@
 <div class="card-grid">
-    <div class="grid-row">
+    <!-- <div class="grid-row">
         <app-card [id]="1" [cardOwner]="testOwners[0]" (click)="changeCardOwnder(0)" [attackPower]="85" [attackStyle]="attackStyle.ASSUALT" [physicalDefense]="24" [magicalDefense]="15" [activeArrows]="255"></app-card>
         <app-card [id]="2" [cardOwner]="testOwners[1]" (click)="changeCardOwnder(1)" [attackPower]="20" [attackStyle]="attackStyle.PHYSICAL" [physicalDefense]="1" [magicalDefense]="150" [activeArrows]="250"></app-card>
         <app-card [id]="3" [cardOwner]="testOwners[2]" (click)="changeCardOwnder(2)" [attackPower]="50" [attackStyle]="attackStyle.MAGICAL" [physicalDefense]="204" [magicalDefense]="65" [activeArrows]="132"></app-card>
-        <app-card [id]="4" [cardOwner]="testOwners[2]" (click)="changeCardOwnder(2)" [attackPower]="50" [attackStyle]="attackStyle.MAGICAL" [physicalDefense]="204" [magicalDefense]="65" [activeArrows]="132"></app-card>
+        <app-card [id]="4" [cardOwner]="testOwners[3]" (click)="changeCardOwnder(3)" [attackPower]="50" [attackStyle]="attackStyle.MAGICAL" [physicalDefense]="204" [magicalDefense]="65" [activeArrows]="132"></app-card>
     </div>
     <div class="grid-row">
         <app-card [id]="5" [attackPower]="10" [attackStyle]="attackStyle.ASSUALT" [physicalDefense]="24" [magicalDefense]="15" [activeArrows]="25"></app-card>
@@ -22,5 +22,15 @@
         <app-card [id]="14" [attackPower]="20" [attackStyle]="attackStyle.PHYSICAL" [physicalDefense]="1" [magicalDefense]="150" [activeArrows]="250"></app-card>
         <app-card [id]="15" [attackPower]="50" [attackStyle]="attackStyle.MAGICAL" [physicalDefense]="204" [magicalDefense]="65" [activeArrows]="132"></app-card>
         <app-card [id]="16" [attackPower]="50" [attackStyle]="attackStyle.MAGICAL" [physicalDefense]="204" [magicalDefense]="65" [activeArrows]="132"></app-card>
+    </div> -->
+    <div *ngFor="let i of counter(4)" class="grid-row">
+        <app-card *ngFor="let j of counter(4)" [id]="4 * i + j"
+        [attackPower]="attackPowers[4 * i + j]"
+        [attackStyle]="attackStyle.ASSUALT"
+        [physicalDefense]="24"
+        [magicalDefense]="15"
+        [activeArrows]="cardArrows[4 * i + j]"
+        [cardOwner]="cardOwners[4 * i + j]"
+        (click)="changeCardOwner(4 * i + j)"></app-card>
     </div>
 </div>

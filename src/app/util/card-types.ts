@@ -7,5 +7,7 @@ export enum AttackStyle {
 
 export enum CardOwner {
     FRIEND = 'friend',
-    ENEMY = 'enemy'
+    ENEMY = 'enemy',
+    EMPTY = 'empty',
+    BLOCKED = 'blocked'
 }

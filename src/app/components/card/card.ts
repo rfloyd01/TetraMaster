@@ -1,13 +1,14 @@
-import { AfterViewInit, Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { AttackStyle, CardOwner } from '../../util/card-types';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-card',
-  imports: [],
+  imports: [CommonModule],
   templateUrl: './card.html',
   styleUrl: './card.css'
 })
-export class Card implements OnInit, AfterViewInit, OnChanges {
+export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked {
   
   @Input()
   activeArrows: number = 0b11111111; //8 bit number representing the arrows on the card
@@ -37,6 +38,9 @@ export class Card implements OnInit, AfterViewInit, OnChanges {
   displayPhysicalDefense: string = '0';
   displayMagicalDefense: string = '0';
 
+  displayStats: boolean = true;
+  cardJustPlaced: boolean = false;
+
   ngOnInit(): void {
     this.calculateDisplayValues();
   }
@@ -50,11 +54,22 @@ export class Card implements OnInit, AfterViewInit, OnChanges {
     if (changes['cardOwner']) {
       this.setCardOwner();
     }
+
+    this.setCardOwner();
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.cardJustPlaced) {
+      console.log('Adding arrows...');
+      this.cardJustPlaced = false;
+      this.makeActiveArrowsVisible();
+    }
   }
 
   makeActiveArrowsVisible() {
-    let cardHTMLElementChildren = document.getElementById('card-' + this.id)?.children;
+    let cardHTMLElementChildren = document.getElementById('card-' + this.id)?.children?.item(0)?.children;
     let shifter = 1;
+    
     for (let i = 0; i < 8; i++) {
       if (shifter & this.activeArrows) {
         cardHTMLElementChildren?.item(i)?.classList.add('active');
@@ -74,17 +89,24 @@ export class Card implements OnInit, AfterViewInit, OnChanges {
     let cardHTMLElement = document.getElementById('card-' + this.id);
 
     if (cardHTMLElement) {
-      //Remove any existing ownership class for the card
-      if (cardHTMLElement.classList.contains(CardOwner.FRIEND)) {
-        cardHTMLElement.classList.remove(CardOwner.FRIEND);
-      } else if (cardHTMLElement.classList.contains(CardOwner.ENEMY)) {
-        cardHTMLElement.classList.remove(CardOwner.ENEMY);
+      //Remove any existing ownership class for the card. If card was previously empty
+      //then we need to actively render card's arrows. A boolean flag is used to do this.
+      if (cardHTMLElement.classList.contains(CardOwner.EMPTY)) {
+        this.cardJustPlaced = true;
+      }
+
+      for (let owner of Object.values(CardOwner)) {
+        if (cardHTMLElement.classList.contains(owner)) {
+          cardHTMLElement.classList.remove(owner);
+        }
       }
 
       //then add the new class
       cardHTMLElement.classList.add(this.cardOwner);
     }
-    
+
+    //Finally, disable/enable stats from being shown
+    this.displayStats = (this.cardOwner == CardOwner.FRIEND || this.cardOwner == CardOwner.ENEMY);
   }
 
   findNearestHexNumber(decimalNumber: number): string {

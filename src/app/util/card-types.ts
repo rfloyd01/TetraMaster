@@ -4,3 +4,8 @@ export enum AttackStyle {
     FLEXIBLE = 'X',
     ASSUALT = 'A'
 }
+
+export enum CardOwner {
+    FRIEND = 'friend',
+    ENEMY = 'enemy'
+}

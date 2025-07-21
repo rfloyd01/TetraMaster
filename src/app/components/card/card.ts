@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
-import { AttackStyle } from '../../util/card-types';
+import { AfterViewInit, Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { AttackStyle, CardOwner } from '../../util/card-types';
 
 @Component({
   selector: 'app-card',
@@ -7,7 +7,7 @@ import { AttackStyle } from '../../util/card-types';
   templateUrl: './card.html',
   styleUrl: './card.css'
 })
-export class Card implements OnInit, AfterViewInit {
+export class Card implements OnInit, AfterViewInit, OnChanges {
   
   @Input()
   activeArrows: number = 0b11111111; //8 bit number representing the arrows on the card
@@ -30,6 +30,9 @@ export class Card implements OnInit, AfterViewInit {
   @Input()
   cardType: number = 0; //0 = wolf, 1 = goblin ... 67 = genji, etc.
 
+  @Input()
+  cardOwner: CardOwner = CardOwner.FRIEND;
+
   displayAttackPower: string = '0';
   displayPhysicalDefense: string = '0';
   displayMagicalDefense: string = '0';
@@ -40,6 +43,13 @@ export class Card implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.makeActiveArrowsVisible();
+    this.setCardOwner();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['cardOwner']) {
+      this.setCardOwner();
+    }
   }
 
   makeActiveArrowsVisible() {
@@ -60,39 +70,40 @@ export class Card implements OnInit, AfterViewInit {
     this.displayMagicalDefense = this.findNearestHexNumber(this.magicalDefense);
   }
 
+  setCardOwner() {
+    let cardHTMLElement = document.getElementById('card-' + this.id);
+
+    if (cardHTMLElement) {
+      //Remove any existing ownership class for the card
+      if (cardHTMLElement.classList.contains(CardOwner.FRIEND)) {
+        cardHTMLElement.classList.remove(CardOwner.FRIEND);
+      } else if (cardHTMLElement.classList.contains(CardOwner.ENEMY)) {
+        cardHTMLElement.classList.remove(CardOwner.ENEMY);
+      }
+
+      //then add the new class
+      cardHTMLElement.classList.add(this.cardOwner);
+    }
+    
+  }
+
   findNearestHexNumber(decimalNumber: number): string {
+    //Takes the input base 10 number and converts it to the nearest (rounded down)
+    //hexadecimal number, returning this hex number as a string. For example, an 
+    //input of 123 would return the hex decimal '7'. Any input outside the range of 
+    //0-255 will be rounded to either the '0' digit of 'F' digit.
     if (decimalNumber < 16) {
       return '0';
-    } else if (decimalNumber < 32) {
-      return '1';
-    } else if (decimalNumber < 48) {
-      return '2';
-    } else if (decimalNumber < 64) {
-      return '3';
-    } else if (decimalNumber < 80) {
-      return '4';
-    } else if (decimalNumber < 96) {
-      return '5';
-    } else if (decimalNumber < 112) {
-      return '6';
-    } else if (decimalNumber < 128) {
-      return '7';
-    } else if (decimalNumber < 144) {
-      return '8';
-    } else if (decimalNumber < 160) {
-      return '9';
-    } else if (decimalNumber < 176) {
-      return 'A';
-    } else if (decimalNumber < 192) {
-      return 'B';
-    } else if (decimalNumber < 208) {
-      return 'C';
-    } else if (decimalNumber < 224) {
-      return 'D';
-    } else if (decimalNumber < 240) {
-      return 'E';
-    } else {
+    } else if (decimalNumber > 255) {
       return 'F';
     }
+    
+    const baseSixteenNumber = Math.floor(decimalNumber / 16);
+
+    if (baseSixteenNumber >= 10) {
+      return String.fromCharCode('A'.charCodeAt(0) + (baseSixteenNumber - 10));
+    }
+
+    return String(baseSixteenNumber);
   }
 }

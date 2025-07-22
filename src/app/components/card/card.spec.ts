@@ -20,4 +20,11 @@ describe('Card', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('findNearestHexNumber returns correct value in all cases', () => {
+    const expectedValues: string[] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
+
+    for (let i:number = 0; i < 256; i++)
+    expect(component.findNearestHexNumber(i)).toBe(expectedValues[i / 16]);
+  })
 });

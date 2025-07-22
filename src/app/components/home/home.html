@@ -1,12 +1,28 @@
-<div class="card-grid">
-    <div class="grid-row">
-        <app-card [id]="1" [attackPower]="10" [attackStyle]="attackStyle.ASSUALT" [physicalDefense]="24" [magicalDefense]="15" [activeArrows]="26"></app-card>
-        <app-card [id]="2" [attackPower]="20" [attackStyle]="attackStyle.PHYSICAL" [physicalDefense]="1" [magicalDefense]="150" [activeArrows]="250"></app-card>
-        <app-card [id]="3" [attackPower]="50" [attackStyle]="attackStyle.MAGICAL" [physicalDefense]="204" [magicalDefense]="65" [activeArrows]="132"></app-card>
+<div class="card-board">
+    <div class="enemy-card-holder">
+        <app-card [id]="100" class="slot-1" [cardOwner]="cardOwner.BACK"></app-card>
+        <app-card [id]="101" class="slot-2" [cardOwner]="cardOwner.BACK"></app-card>
+        <app-card [id]="102" class="slot-3" [cardOwner]="cardOwner.BACK"></app-card>
+        <app-card [id]="103" class="slot-4" [cardOwner]="cardOwner.BACK"></app-card>
+        <app-card [id]="104" class="slot-5" [cardOwner]="cardOwner.BACK"></app-card>
     </div>
-    <div class="grid-row">
-        <app-card [id]="4" [attackPower]="10" [attackStyle]="attackStyle.ASSUALT" [physicalDefense]="24" [magicalDefense]="15" [activeArrows]="26"></app-card>
-        <app-card [id]="5" [attackPower]="20" [attackStyle]="attackStyle.PHYSICAL" [physicalDefense]="1" [magicalDefense]="150" [activeArrows]="250"></app-card>
-        <app-card [id]="6" [attackPower]="50" [attackStyle]="attackStyle.MAGICAL" [physicalDefense]="204" [magicalDefense]="65" [activeArrows]="132"></app-card>
+    <div class="card-grid">
+        <div *ngFor="let i of counter(4)" class="grid-row">
+            <app-card *ngFor="let j of counter(4)" [id]="4 * i + j"
+            [attackPower]="attackPowers[4 * i + j]"
+            [attackStyle]="attackStyle.ASSUALT"
+            [physicalDefense]="24"
+            [magicalDefense]="15"
+            [activeArrows]="cardArrows[4 * i + j]"
+            [cardOwner]="cardOwners[4 * i + j]"
+            (click)="changeCardOwner(4 * i + j)"></app-card>
+        </div>
+    </div>
+    <div class="player-card-holder">
+        <app-card [id]="105" [cardOwner]="cardOwner.FRIEND"></app-card>
+        <app-card [id]="106" [cardOwner]="cardOwner.FRIEND"></app-card>
+        <app-card [id]="107" [cardOwner]="cardOwner.FRIEND"></app-card>
+        <app-card [id]="108" [cardOwner]="cardOwner.FRIEND"></app-card>
+        <app-card [id]="109" [cardOwner]="cardOwner.FRIEND"></app-card>
     </div>
 </div>

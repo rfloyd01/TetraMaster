@@ -4,3 +4,11 @@ export enum AttackStyle {
     FLEXIBLE = 'X',
     ASSUALT = 'A'
 }
+
+export enum CardDisplay {
+    FRIEND = 'friend',
+    ENEMY = 'enemy',
+    EMPTY = 'empty',
+    BLOCKED = 'blocked',
+    BACK = 'back'
+}

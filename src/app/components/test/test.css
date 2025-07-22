@@ -1,0 +1,76 @@
+.triangle {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.triangle.se {
+  width: 0;
+  height: 0;
+  border-top-width: 10vh; /*sets height*/
+  border-top-style: solid;
+  border-top-color: transparent;
+  border-right-width: 10vh; /*sets width*/
+  border-right-style: solid;
+  border-right-color: red;
+}
+
+.triangle.nw {
+  width: 0;
+  height: 0;
+  border-top-width: 10vh; /*sets height*/
+  border-top-style: solid;
+  border-top-color: red;
+  border-right-width: 10vh; /*sets width*/
+  border-right-style: solid;
+  border-right-color: transparent;
+}
+
+.triangle.ne {
+  width: 0;
+  height: 0;
+  border-top-width: 10vh; /*sets height*/
+  border-top-style: solid;
+  border-top-color: red;
+  border-left-width: 10vh; /*sets width*/
+  border-left-style: solid;
+  border-left-color: transparent;
+}
+
+.triangle.sw {
+  width: 0;
+  height: 0;
+  border-top-width: 10vh; /*sets height*/
+  border-top-style: solid;
+  border-top-color: transparent;
+  border-left-width: 10vh; /*sets width*/
+  border-left-style: solid;
+  border-left-color: red;
+}
+
+.triangle.n {
+  width: 0;
+  height: 0;
+  border-bottom-width: 10vh; /*sets height*/
+  border-bottom-style: solid;
+  border-bottom-color: red;
+  border-right-width: 10vh; /*sets width*/
+  border-right-style: solid;
+  border-right-color: transparent;
+  border-left-width: 10vh; /*sets width*/
+  border-left-style: solid;
+  border-left-color: transparent;
+}
+
+.triangle.s {
+  width: 0;
+  height: 0;
+  border-top-width: 10vh; /*sets height*/
+  border-top-style: solid;
+  border-top-color: red;
+  border-right-width: 10vh; /*sets width*/
+  border-right-style: solid;
+  border-right-color: transparent;
+  border-left-width: 10vh; /*sets width*/
+  border-left-style: solid;
+  border-left-color: transparent;
+}

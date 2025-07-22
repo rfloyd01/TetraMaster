@@ -19,6 +19,18 @@
     transition: background-color 0.3s ease;
 }
 
+.card-back {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.card-back img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .friend {
     background-color: blue;
 }

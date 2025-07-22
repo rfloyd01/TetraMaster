@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Card } from '../card/card';
-import { AttackStyle, CardOwner } from '../../util/card-types';
+import { AttackStyle, CardDisplay } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -11,10 +11,10 @@ import { CommonModule } from '@angular/common';
 })
 export class Home implements OnInit {
   attackStyle = AttackStyle;
-  cardOwner = CardOwner;
+  cardOwner = CardDisplay;
 
   // testOwners: CardOwner[] = [CardOwner.ENEMY, CardOwner.ENEMY, CardOwner.ENEMY, CardOwner.ENEMY, CardOwner.ENEMY, CardOwner.ENEMY];
-  cardOwners: CardOwner[] = [];
+  cardOwners: CardDisplay[] = [];
   attackPowers: number[] = [];
   cardArrows: number[] = [];
 
@@ -25,18 +25,18 @@ export class Home implements OnInit {
   }
 
   changeCardOwner(card: number) {
-    if (this.cardOwners[card] == CardOwner.ENEMY) {
-      this.cardOwners[card] = CardOwner.FRIEND;
-    } else if (this.cardOwners[card] == CardOwner.FRIEND) {
-      this.cardOwners[card] = CardOwner.ENEMY;
-    } else if (this.cardOwners[card] == CardOwner.EMPTY) {
-      this.cardOwners[card] = CardOwner.FRIEND;
+    if (this.cardOwners[card] == CardDisplay.ENEMY) {
+      this.cardOwners[card] = CardDisplay.FRIEND;
+    } else if (this.cardOwners[card] == CardDisplay.FRIEND) {
+      this.cardOwners[card] = CardDisplay.ENEMY;
+    } else if (this.cardOwners[card] == CardDisplay.EMPTY) {
+      this.cardOwners[card] = CardDisplay.FRIEND;
     }
   }
 
   initializeCards() {
     for (let i:number = 0; i < 16; i++) {
-      this.cardOwners.push(CardOwner.EMPTY);
+      this.cardOwners.push(CardDisplay.EMPTY);
       this.attackPowers.push(Math.floor(Math.random() * 256));
       this.cardArrows.push(Math.floor(Math.random() * 256));
     }
@@ -53,7 +53,7 @@ export class Home implements OnInit {
       while (true) {
         const blockerLocation = Math.floor(Math.random() * 16);
         if (!(assignedBlockers & (1 << blockerLocation))) {
-          this.cardOwners[blockerLocation] = CardOwner.BLOCKED;
+          this.cardOwners[blockerLocation] = CardDisplay.BLOCKED;
           break;
         }
       }

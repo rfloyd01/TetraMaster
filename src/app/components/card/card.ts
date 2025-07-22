@@ -1,5 +1,5 @@
 import { AfterViewChecked, AfterViewInit, Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { AttackStyle, CardOwner } from '../../util/card-types';
+import { AttackStyle, CardDisplay } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -32,14 +32,16 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
   cardType: number = 0; //0 = wolf, 1 = goblin ... 67 = genji, etc.
 
   @Input()
-  cardOwner: CardOwner = CardOwner.FRIEND;
+  cardOwner: CardDisplay = CardDisplay.FRIEND;
 
   displayAttackPower: string = '0';
   displayPhysicalDefense: string = '0';
   displayMagicalDefense: string = '0';
 
+  displayBack: boolean = false;
   displayStats: boolean = true;
   cardJustPlaced: boolean = false;
+  selected: boolean = false;
 
   ngOnInit(): void {
     this.calculateDisplayValues();
@@ -47,15 +49,15 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
 
   ngAfterViewInit(): void {
     this.makeActiveArrowsVisible();
-    this.setCardOwner();
+    this.setCardDisplay();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['cardOwner']) {
-      this.setCardOwner();
+      this.setCardDisplay();
     }
 
-    this.setCardOwner();
+    this.setCardDisplay();
   }
 
   ngAfterViewChecked(): void {
@@ -85,17 +87,19 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
     this.displayMagicalDefense = this.findNearestHexNumber(this.magicalDefense);
   }
 
-  setCardOwner() {
+  setCardDisplay() {
     let cardHTMLElement = document.getElementById('card-' + this.id);
 
     if (cardHTMLElement) {
-      //Remove any existing ownership class for the card. If card was previously empty
-      //then we need to actively render card's arrows. A boolean flag is used to do this.
-      if (cardHTMLElement.classList.contains(CardOwner.EMPTY)) {
+      
+      //Set component booleans based on new/old Display type
+      if (cardHTMLElement.classList.contains(CardDisplay.EMPTY)) {
         this.cardJustPlaced = true;
       }
 
-      for (let owner of Object.values(CardOwner)) {
+      //Remove any existing ownership class for the card. If card was previously empty
+      //then we need to actively render card's arrows. A boolean flag is used to do this.
+      for (let owner of Object.values(CardDisplay)) {
         if (cardHTMLElement.classList.contains(owner)) {
           cardHTMLElement.classList.remove(owner);
         }
@@ -106,7 +110,8 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
     }
 
     //Finally, disable/enable stats from being shown
-    this.displayStats = (this.cardOwner == CardOwner.FRIEND || this.cardOwner == CardOwner.ENEMY);
+    this.displayStats = (this.cardOwner == CardDisplay.FRIEND || this.cardOwner == CardDisplay.ENEMY);
+    this.displayBack = (this.cardOwner == CardDisplay.BACK);
   }
 
   findNearestHexNumber(decimalNumber: number): string {

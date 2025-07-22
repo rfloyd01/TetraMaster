@@ -5,9 +5,10 @@ export enum AttackStyle {
     ASSUALT = 'A'
 }
 
-export enum CardOwner {
+export enum CardDisplay {
     FRIEND = 'friend',
     ENEMY = 'enemy',
     EMPTY = 'empty',
-    BLOCKED = 'blocked'
+    BLOCKED = 'blocked',
+    BACK = 'back'
 }

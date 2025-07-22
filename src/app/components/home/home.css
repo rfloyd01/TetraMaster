@@ -18,20 +18,20 @@
 }
 
 .grid-row app-card {
-    margin: 5px;
+    margin: 0.5vh;
 }
 
 .enemy-card-holder {
     position: relative;
     height: 80vh;
     width: 200px;
-    margin-top: 5px;
+    margin-top: 0.5vh;
 }
 
 .player-card-holder {
-    transform: scale(0.8); /* shrink to 50% */
-    transform-origin: top left; /* optional: control anchor point */
-    margin-top: 5px;
+    transform: scale(0.827);
+    transform-origin: top left;
+    margin-top: 0.5vh;
 }
 
 .enemy-card-holder .slot-1 {

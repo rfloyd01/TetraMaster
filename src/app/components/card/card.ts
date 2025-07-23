@@ -1,5 +1,5 @@
-import { AfterViewChecked, AfterViewInit, Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { AttackStyle, CardDisplay } from '../../util/card-types';
+import { AfterViewChecked, AfterViewInit, Component, effect, Input, OnChanges, OnInit, Signal, SimpleChanges } from '@angular/core';
+import { AttackStyle, CardDisplay, CardStats } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -11,28 +11,22 @@ import { CommonModule } from '@angular/common';
 export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked {
   
   @Input()
-  activeArrows: number = 0b11111111; //8 bit number representing the arrows on the card
-
-  @Input()
   id: number = 0; //unique number to distinguish from other cards on map
-
-  @Input()
-  attackPower: number = 0;
-  
-  @Input()
-  attackStyle: AttackStyle = AttackStyle.FLEXIBLE;
-
-  @Input()
-  physicalDefense: number = 100;
-
-  @Input()
-  magicalDefense: number = 21;
 
   @Input()
   cardType: number = 0; //0 = wolf, 1 = goblin ... 67 = genji, etc.
 
   @Input()
-  cardOwner: CardDisplay = CardDisplay.FRIEND;
+  cardDisplay: CardDisplay = CardDisplay.FRIEND;
+
+  // @Input()
+  // cardStats!: Signal<CardStats>;
+
+  @Input()
+  cardStats!: CardStats;
+
+  @Input()
+  isSelected: boolean = false;
 
   displayAttackPower: string = '0';
   displayPhysicalDefense: string = '0';
@@ -41,10 +35,13 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
   displayBack: boolean = false;
   displayStats: boolean = true;
   cardJustPlaced: boolean = false;
-  selected: boolean = false;
 
   ngOnInit(): void {
     this.calculateDisplayValues();
+    // effect(() => {
+    //   console.log('card info changed');
+    //   console.log(this.cardStats);
+    // })
   }
 
   ngAfterViewInit(): void {
@@ -53,16 +50,27 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['cardOwner']) {
-      this.setCardDisplay();
+    // if (changes['cardOwner']) {
+    //   this.setCardDisplay();
+    // } else
+    // console.log(changes);
+    if (changes['isSelected'] !== undefined) {
+      // console.log('selected a card baby');
+      let cardHTMLElement = document.getElementById('card-' + this.id);
+      if (cardHTMLElement) {
+        if (changes['isSelected'].currentValue) {
+          this.addCSSClasses(cardHTMLElement, ['selected']);
+        } else {
+          this.removeCSSClasses(cardHTMLElement, ['selected']);
+        }
+      }
     }
 
-    this.setCardDisplay();
+    this.setCardDisplay(); //Update display after changes have been applied
   }
 
   ngAfterViewChecked(): void {
     if (this.cardJustPlaced) {
-      console.log('Adding arrows...');
       this.cardJustPlaced = false;
       this.makeActiveArrowsVisible();
     }
@@ -73,7 +81,10 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
     let shifter = 1;
     
     for (let i = 0; i < 8; i++) {
-      if (shifter & this.activeArrows) {
+      // if (shifter & this.cardStats().activeArrows) {
+      //   cardHTMLElementChildren?.item(i)?.classList.add('active');
+      // }
+      if (shifter & this.cardStats.activeArrows) {
         cardHTMLElementChildren?.item(i)?.classList.add('active');
       }
 
@@ -82,9 +93,15 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
   }
 
   calculateDisplayValues() {
-    this.displayAttackPower = this.findNearestHexNumber(this.attackPower);
-    this.displayPhysicalDefense = this.findNearestHexNumber(this.physicalDefense);
-    this.displayMagicalDefense = this.findNearestHexNumber(this.magicalDefense);
+    if (this.cardStats !== undefined) {
+      // this.displayAttackPower = this.findNearestHexNumber(this.cardStats().attackPower);
+      // this.displayPhysicalDefense = this.findNearestHexNumber(this.cardStats().physicalDefense);
+      // this.displayMagicalDefense = this.findNearestHexNumber(this.cardStats().magicalDefense);
+      this.displayAttackPower = this.findNearestHexNumber(this.cardStats.attackPower);
+      this.displayPhysicalDefense = this.findNearestHexNumber(this.cardStats.physicalDefense);
+      this.displayMagicalDefense = this.findNearestHexNumber(this.cardStats.magicalDefense);
+    }
+    
   }
 
   setCardDisplay() {
@@ -99,19 +116,20 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
 
       //Remove any existing ownership class for the card. If card was previously empty
       //then we need to actively render card's arrows. A boolean flag is used to do this.
-      for (let owner of Object.values(CardDisplay)) {
-        if (cardHTMLElement.classList.contains(owner)) {
-          cardHTMLElement.classList.remove(owner);
-        }
-      }
+      // for (let owner of Object.values(CardDisplay)) {
+      //   if (cardHTMLElement.classList.contains(owner)) {
+      //     cardHTMLElement.classList.remove(owner);
+      //   }
+      // }
+      this.removeCSSClasses(cardHTMLElement, Object.values(CardDisplay));
 
       //then add the new class
-      cardHTMLElement.classList.add(this.cardOwner);
+      cardHTMLElement.classList.add(this.cardDisplay);
     }
 
     //Finally, disable/enable stats from being shown
-    this.displayStats = (this.cardOwner == CardDisplay.FRIEND || this.cardOwner == CardDisplay.ENEMY);
-    this.displayBack = (this.cardOwner == CardDisplay.BACK);
+    this.displayStats = (this.cardDisplay == CardDisplay.FRIEND || this.cardDisplay == CardDisplay.ENEMY);
+    this.displayBack = (this.cardDisplay == CardDisplay.BACK);
   }
 
   findNearestHexNumber(decimalNumber: number): string {
@@ -132,5 +150,19 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
     }
 
     return String(baseSixteenNumber);
+  }
+
+  addCSSClasses(htmlElement: HTMLElement, cssClasses: string[]) {
+    for (let cssClass of cssClasses) {
+      htmlElement.classList.add(cssClass);
+    }
+  }
+
+  removeCSSClasses(htmlElement: HTMLElement, cssClasses: string[]) {
+    for (let cssClass of cssClasses) {
+      if (htmlElement.classList.contains(cssClass)) {
+        htmlElement.classList.remove(cssClass);
+      }
+    }
   }
 }

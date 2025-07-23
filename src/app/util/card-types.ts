@@ -12,3 +12,16 @@ export enum CardDisplay {
     BLOCKED = 'blocked',
     BACK = 'back'
 }
+
+export interface CardStats {
+    activeArrows: number; //8 bit number representing the arrows on the card
+    attackPower: number;
+    attackStyle: AttackStyle;
+    physicalDefense: number;
+    magicalDefense: number;
+}
+
+export interface CardInfo {
+    cardStats: CardStats;
+    isSelected: boolean;
+}

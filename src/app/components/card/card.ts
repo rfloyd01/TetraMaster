@@ -1,5 +1,5 @@
 import { AfterViewChecked, AfterViewInit, Component, effect, Input, OnChanges, OnInit, Signal, SimpleChange, SimpleChanges } from '@angular/core';
-import { AttackStyle, CardDisplay, CardStats } from '../../util/card-types';
+import { CardDisplay, CardStats } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -19,9 +19,6 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
   @Input()
   cardDisplay: CardDisplay = CardDisplay.FRIEND;
 
-  // @Input()
-  // cardStats!: Signal<CardStats>;
-
   @Input()
   cardStats!: CardStats;
 
@@ -31,6 +28,7 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
   displayAttackPower: string = '0';
   displayPhysicalDefense: string = '0';
   displayMagicalDefense: string = '0';
+  displayAttackStyle: string = 'P';
 
   displayBack: boolean = false;
   displayStats: boolean = true;
@@ -69,6 +67,11 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
   }
 
   makeActiveArrowsVisible() {
+    if (!this.cardStats) {
+      //If there aren't any stats then there won't be any arrows to render
+      return;
+    }
+
     let cardHTMLElementChildren = document.getElementById('card-' + this.id)?.children?.item(0)?.children;
     let shifter = 1;
     
@@ -86,6 +89,7 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
       this.displayAttackPower = this.findNearestHexNumber(this.cardStats.attackPower);
       this.displayPhysicalDefense = this.findNearestHexNumber(this.cardStats.physicalDefense);
       this.displayMagicalDefense = this.findNearestHexNumber(this.cardStats.magicalDefense);
+      this.displayAttackStyle = this.cardStats.attackStyle;
     }
     
   }
@@ -102,11 +106,6 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
 
       //Remove any existing ownership class for the card. If card was previously empty
       //then we need to actively render card's arrows. A boolean flag is used to do this.
-      // for (let owner of Object.values(CardDisplay)) {
-      //   if (cardHTMLElement.classList.contains(owner)) {
-      //     cardHTMLElement.classList.remove(owner);
-      //   }
-      // }
       this.removeCSSClasses(cardHTMLElement, Object.values(CardDisplay));
 
       //then add the new class

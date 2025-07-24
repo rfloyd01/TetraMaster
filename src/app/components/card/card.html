@@ -1,5 +1,6 @@
 <div [id]="'card-' + id" class="card">
     <div *ngIf="displayStats" class="card-stats-container">
+        <div class="arrow nw"></div>
         <div class="arrow n"></div>
         <div class="arrow ne"></div>
         <div class="arrow e"></div>
@@ -7,7 +8,6 @@
         <div class="arrow s"></div>
         <div class="arrow sw"></div>
         <div class="arrow w"></div>
-        <div class="arrow nw"></div>
         <div class="border n"></div>
         <div class="border e"></div>
         <div class="border s"></div>
@@ -23,7 +23,7 @@
         <div class="casing right-bottom"></div>
         <div class="stat-row">
             <div class="stat">{{displayAttackPower}}</div>
-            <div class="stat">{{cardStats.attackStyle}}</div>
+            <div class="stat">{{displayAttackStyle}}</div>
             <div class="stat">{{displayPhysicalDefense}}</div>
             <div class="stat">{{displayMagicalDefense}}</div>
         </div>

@@ -161,7 +161,7 @@ export class Home implements OnInit {
       this.selectedCard = null;
 
       //Initiate the battle phase against any neighboring oppenent cards
-      //TODO: Implement this method
+      this.gameplayService.initiateCardBattles(this.gridCards[gridIndex], this.gridCards);
       
       //Advance the game
       this.advanceGame();

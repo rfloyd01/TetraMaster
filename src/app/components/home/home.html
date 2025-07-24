@@ -1,10 +1,10 @@
 <div class="card-board">
     <div class="enemy-card-holder">
-        <app-card *ngFor="let i of counter(5)"
+        <app-card *ngFor="let card of opponentCards; let i = index"
         [ngClass]="'slot-' + i"
-        [id]="opponentCards[i].id"
-        [cardDisplay]="opponentCards[i].cardDisplay"
-        [cardStats]="opponentCards[i].cardStats"></app-card>
+        [id]="card.id"
+        [cardDisplay]="card.cardDisplay"
+        [cardStats]="card.cardStats"></app-card>
     </div>
     <div class="card-grid">
         <div *ngFor="let i of counter(4)" class="grid-row">

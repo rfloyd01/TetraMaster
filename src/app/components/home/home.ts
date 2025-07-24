@@ -1,7 +1,9 @@
-import { Component, OnInit, signal, Signal } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Card } from '../card/card';
-import { AttackStyle, CardDisplay, CardInfo, CardStats } from '../../util/card-types';
+import { AttackStyle, CardDisplay, CardInfo } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
+import { Gameplay } from '../../services/gameplay';
+import { removeCardFromHandById } from '../../util/card-util';
 
 @Component({
   selector: 'app-home',
@@ -23,20 +25,14 @@ export class Home implements OnInit {
   gamePhase: number = 0;
   selectedCard!: CardInfo | null;
 
+  constructor(private gameplayService: Gameplay) {
+
+  }
+
   ngOnInit(): void {
     this.createRandomBoard();
     this.createPlayerCards();
   }
-
-  // changeCardDisplay(card: number) {
-  //   if (this.cardDisplays[card] == CardDisplay.ENEMY) {
-  //     this.cardDisplays[card] = CardDisplay.FRIEND;
-  //   } else if (this.cardDisplays[card] == CardDisplay.FRIEND) {
-  //     this.cardDisplays[card] = CardDisplay.ENEMY;
-  //   } else if (this.cardDisplays[card] == CardDisplay.EMPTY) {
-  //     this.cardDisplays[card] = CardDisplay.FRIEND;
-  //   }
-  // }
 
   createRandomBoard() {
     //First generate a random number between 0 and 6, this will represent how many slots
@@ -77,25 +73,6 @@ export class Home implements OnInit {
       this.playerCards.push({id: i + 105, cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.FRIEND });
     }
   }
-
-  // selectPlayerCard(cardId: number) {
-  //   //The player has selected a card from their card holder, first iterate over
-  //   //all the cards in the holder and remove the selected status from anything
-  //   //that has it. Then apply the selected status to the given card.
-  //   for (let i:number = 0; i < this.playerCards.length; i++) {
-  //     if (i == cardId) {
-  //       //flip the currently selected card from its current value
-  //       this.playerCards[i].isSelected = !this.playerCards[i].isSelected;
-  //       if (this.playerCards[i].isSelected) {
-  //         this.selectedCard = this.playerCards[i];
-  //       } else {
-  //         this.selectedCard = null;
-  //       }
-  //     } else if (this.playerCards[i].isSelected) {
-  //       this.playerCards[i].isSelected = false;
-  //     }
-  //   }
-  // }
 
   selectPlayerCard(card: CardInfo) {    
     //First iterate over all other cards in the player's hand and make sure they're deselected
@@ -156,10 +133,13 @@ export class Home implements OnInit {
       this.gridCards[gridIndex].isSelected = false;
 
       //Remove the card from the player's hand
-      this.playerCards = this.playerCards.filter(keepCard => keepCard.id !== this.selectedCard?.id);
+      removeCardFromHandById(this.selectedCard.id, this.playerCards);
       this.selectedCard = null;
 
       //Initiate the battle phase against any neighboring oppenent cards
+
+      //TODO: For now simply make the opponent move to a random location
+      this.gameplayService.randomizeOpponentsTurn(this.opponentCards, this.gridCards);
     }
   }
 

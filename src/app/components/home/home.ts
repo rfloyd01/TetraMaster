@@ -17,21 +17,41 @@ export class Home implements OnInit {
   cardDisplay = CardDisplay;
 
   //Card Arrays
-  gridCards: CardInfo[] = [];
-  playerCards: CardInfo[] = [];
-  opponentCards: CardInfo[] = [];
+  gridCards!: CardInfo[];
+  playerCards!: CardInfo[]; //TODO: Eventually these will be passed in as an input variable
+  opponentCards!: CardInfo[];
 
   //State Variables
-  gamePhase: number = 0;
+  gamePhase!: number;
   selectedCard!: CardInfo | null;
+  playerGoesFirst!: number;
+  playerCanMove!: boolean;
 
   constructor(private gameplayService: Gameplay) {
-
   }
 
   ngOnInit(): void {
+    this.startNewGame();
+  }
+
+  startNewGame() {
+    console.log('Starting a new game');
+    
+    this.resetGameVariables();
     this.createRandomBoard();
     this.createPlayerCards();
+    this.advanceGame();
+  }
+
+  resetGameVariables() {
+    this.gridCards = [];
+    this.playerCards = [];
+    this.opponentCards = [];
+
+    this.gamePhase = 0;
+    this.selectedCard = null;
+    this.playerGoesFirst = 0;
+    this.playerCanMove = false;
   }
 
   createRandomBoard() {
@@ -74,17 +94,21 @@ export class Home implements OnInit {
     }
   }
 
-  selectPlayerCard(card: CardInfo) {    
-    //First iterate over all other cards in the player's hand and make sure they're deselected
-    for (let playerCard of this.playerCards) {
-      if (playerCard.id != card.id && playerCard.isSelected) {
-        playerCard.isSelected = false; //only set if current value is true
+  selectPlayerCard(card: CardInfo) {
+    //Don't let the player select a card if it isn't their turn
+    if (this.playerCanMove) {
+      //First iterate over all other cards in the player's hand and make sure they're deselected
+      for (let playerCard of this.playerCards) {
+        if (playerCard.id != card.id && playerCard.isSelected) {
+          playerCard.isSelected = false; //only set if current value is true
+        }
       }
-    }
 
-    //Then flip the selection status of the selected card (deselecting is an option)
-    card.isSelected = !card.isSelected;
-    this.selectedCard = card.isSelected ? card : null;
+      //Then flip the selection status of the selected card (deselecting is an option)
+      card.isSelected = !card.isSelected;
+      this.selectedCard = card.isSelected ? card : null;
+    }
+    
   }
 
   createDefaultStats() {
@@ -137,10 +161,56 @@ export class Home implements OnInit {
       this.selectedCard = null;
 
       //Initiate the battle phase against any neighboring oppenent cards
-
-      //TODO: For now simply make the opponent move to a random location
-      this.gameplayService.randomizeOpponentsTurn(this.opponentCards, this.gridCards);
+      //TODO: Implement this method
+      
+      //Advance the game
+      this.advanceGame();
     }
+  }
+
+  advanceGame() {
+    //There are 12 phases of the game.
+    //Phase 1 - Coin flip to see who goes first
+    //Phases 2 through 11 - Players put cards onto the board
+    //Phase 12 - Game is over with option to play again or quit
+    this.gamePhase++;
+
+    if (this.gamePhase == 1) {
+      //A new game has been started. Randomly select who will go first
+      //and then advance the game
+      this.playerGoesFirst = Math.floor(Math.random() * 2);
+      this.advanceGame();
+    } else if (this.gamePhase == 12) {
+      //Display buttons that will either start a new game or quit
+    } else {
+      //It will either be the player's or opponent's turn depending
+      //on who won the coin toss
+      if (this.gamePhase % 2 == this.playerGoesFirst) {
+        this.startPlayerTurn();
+      } else {
+        this.opponentsTurn();
+      }
+    }
+
+  }
+
+  startPlayerTurn() {
+    //Let the player select a card again. The game will advance
+    //after a move is made by them
+    this.playerCanMove = true;
+  }
+
+  opponentsTurn() {
+    //First lock out the player from making any moves
+    this.playerCanMove = false;
+
+    //Make the move for the opponent and advance the game state,
+    //but wrap this in a slight delay so it looks like the opponent
+    //is thinking for a bit
+    setTimeout(() => {
+      this.gameplayService.randomizeOpponentsTurn(this.opponentCards, this.gridCards); //TODO: For now simply make the opponent move to a random location
+      this.advanceGame();
+    }, 1000);
   }
 
   counter(count: number): number[] {

@@ -24,4 +24,5 @@ export interface CardStats {
 export interface CardInfo {
     cardStats: CardStats;
     isSelected: boolean;
+    cardDisplay: CardDisplay;
 }

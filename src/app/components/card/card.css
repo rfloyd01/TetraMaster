@@ -191,7 +191,11 @@
 
 .arrow.se.active {
     border-right-color: goldenrod;
-} 
+}
+
+.s {
+    bottom: 0px;
+}
 
 .arrow.s {
   width: 0;
@@ -205,7 +209,6 @@
   border-left-width: 1.414vh; /*sets width*/
   border-left-style: solid;
   border-left-color: transparent;
-  bottom: 0px;
 }
 
 .arrow.s.active {
@@ -320,25 +323,23 @@
     border-right-color: green;
 }
 
-.casing.bottom-left {
+.casing.s.left {
   border-bottom-color: grey;
   border-top-style: hidden;
-  bottom: 0px;
   left: 9.166vh;
 }
 
-.selected .casing.bottom-left {
+.selected .casing.s.left {
     border-bottom-color: green;
 }
 
-.casing.bottom-right {
+.casing.s.right {
   border-bottom-color: grey;
   border-top-style: hidden;
-  bottom: 0px;
   right: 9.166vh;
 }
 
-.selected .casing.bottom-right {
+.selected .casing.s.right {
     border-bottom-color: green;
 }
 

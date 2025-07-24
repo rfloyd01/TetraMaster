@@ -3,20 +3,21 @@
         <app-card *ngFor="let i of counter(5)"
         [ngClass]="'slot-' + i"
         [id]="100 + i"
-        [cardDisplay]="cardDisplay.BACK"
-        [cardStats]="opponentCards[i]"></app-card>
+        [cardDisplay]="opponentCards[i].cardDisplay"
+        [cardStats]="opponentCards[i].cardStats"></app-card>
     </div>
     <div class="card-grid">
         <div *ngFor="let i of counter(4)" class="grid-row">
             <app-card *ngFor="let j of counter(4)" [id]="4 * i + j"
-            [cardDisplay]="cardDisplays[4 * i + j]"
-            [cardStats]="createDefaultStats()"></app-card>
+            [cardDisplay]="gridCards[4 * i + j].cardDisplay"
+            [cardStats]="gridCards[4 * i + j].cardStats"
+            (click)="playSelectedCard(i, j)"></app-card>
         </div>
     </div>
     <div class="player-card-holder">
         <app-card *ngFor="let i of counter(5)"
         [id]="105 + i"
-        [cardDisplay]="cardDisplay.FRIEND"
+        [cardDisplay]="playerCards[i].cardDisplay"
         [cardStats]="playerCards[i].cardStats"
         [isSelected]="playerCards[i].isSelected"
         (click)="selectPlayerCard(i)"></app-card>

@@ -10,43 +10,33 @@ import { CommonModule } from '@angular/common';
   styleUrl: './home.css'
 })
 export class Home implements OnInit {
+  //Enum imports for data binding
   attackStyle = AttackStyle;
   cardDisplay = CardDisplay;
 
-  cardDisplays: CardDisplay[] = [];
-  attackPowers: number[] = [];
-  cardArrows: number[] = [];
-
-  //playerCards: Signal<CardStats>[] = []; //use Angular 16+ Signals for updating info about cards
+  //Card Arrays
+  gridCards: CardInfo[] = [];
   playerCards: CardInfo[] = [];
-  opponentCards: CardStats[] = [];
+  opponentCards: CardInfo[] = [];
 
+  //State Variables
   gamePhase: number = 0;
+  selectedCard!: CardInfo | null;
 
   ngOnInit(): void {
-    this.initializeCards();
     this.createRandomBoard();
     this.createPlayerCards();
-    console.log(this.cardDisplays);
   }
 
-  changeCardDisplay(card: number) {
-    if (this.cardDisplays[card] == CardDisplay.ENEMY) {
-      this.cardDisplays[card] = CardDisplay.FRIEND;
-    } else if (this.cardDisplays[card] == CardDisplay.FRIEND) {
-      this.cardDisplays[card] = CardDisplay.ENEMY;
-    } else if (this.cardDisplays[card] == CardDisplay.EMPTY) {
-      this.cardDisplays[card] = CardDisplay.FRIEND;
-    }
-  }
-
-  initializeCards() {
-    for (let i:number = 0; i < 16; i++) {
-      this.cardDisplays.push(CardDisplay.EMPTY);
-      this.attackPowers.push(Math.floor(Math.random() * 256));
-      this.cardArrows.push(Math.floor(Math.random() * 256));
-    }
-  }
+  // changeCardDisplay(card: number) {
+  //   if (this.cardDisplays[card] == CardDisplay.ENEMY) {
+  //     this.cardDisplays[card] = CardDisplay.FRIEND;
+  //   } else if (this.cardDisplays[card] == CardDisplay.FRIEND) {
+  //     this.cardDisplays[card] = CardDisplay.ENEMY;
+  //   } else if (this.cardDisplays[card] == CardDisplay.EMPTY) {
+  //     this.cardDisplays[card] = CardDisplay.FRIEND;
+  //   }
+  // }
 
   createRandomBoard() {
     //First generate a random number between 0 and 6, this will represent how many slots
@@ -59,10 +49,19 @@ export class Home implements OnInit {
       while (true) {
         const blockerLocation = Math.floor(Math.random() * 16);
         if (!(assignedBlockers & (1 << blockerLocation))) {
-          this.cardDisplays[blockerLocation] = CardDisplay.BLOCKED;
+          // this.cardDisplays[blockerLocation] = CardDisplay.BLOCKED;
+          assignedBlockers |= (1 << blockerLocation);
           break;
         }
       }
+    }
+
+    //Once blockers are assigned create cards and place them into the grid
+    //array. These cards will eventually have their stats overriden by player cards.
+    for (let i: number = 0; i < 16; i++) {
+      this.gridCards.push({cardStats: this.createDefaultStats(),
+        isSelected: false,
+        cardDisplay: (assignedBlockers & (1 << i)) ? CardDisplay.BLOCKED : CardDisplay.EMPTY});
     }
   }
 
@@ -73,15 +72,8 @@ export class Home implements OnInit {
     this.playerCards = []; //clear out any existing cards
 
     for (let i:number = 0; i < 5; i++) {
-      // this.playerCards.push(signal({
-      //   activeArrows: Math.floor(Math.random() * 256),
-      //   attackPower: Math.floor(Math.random() * 256),
-      //   attackStyle: AttackStyle.PHYSICAL,
-      //   physicalDefense: Math.floor(Math.random() * 256),
-      //   magicalDefense: Math.floor(Math.random() * 256)
-      // }))
-      this.playerCards.push({cardStats: this.createRandomStats(), isSelected: false});
-      this.opponentCards.push(this.createRandomStats());
+      this.playerCards.push({cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.FRIEND });
+      this.opponentCards.push({cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.BACK });
     }
   }
 
@@ -93,6 +85,11 @@ export class Home implements OnInit {
       if (i == cardId) {
         //flip the currently selected card from its current value
         this.playerCards[i].isSelected = !this.playerCards[i].isSelected;
+        if (this.playerCards[i].isSelected) {
+          this.selectedCard = this.playerCards[i];
+        } else {
+          this.selectedCard = null;
+        }
       } else if (this.playerCards[i].isSelected) {
         this.playerCards[i].isSelected = false;
       }
@@ -126,40 +123,29 @@ export class Home implements OnInit {
   }
 
   createStats(activeArrows: number, attackPower: number, attackStyle: AttackStyle,
-    physicalDefense:number, magicalDefense: number) {
+  physicalDefense:number, magicalDefense: number) {
     return {
-        activeArrows: activeArrows,
-        attackPower: attackPower,
-        attackStyle: attackStyle,
-        physicalDefense: physicalDefense,
-        magicalDefense: magicalDefense
-      }
-}
-
-  // createStatsSignal(type:number, stats?:CardStats):Signal<CardStats> {
-  //   if (type == 0) {
-  //     return this.createRandomStatsSignal();
-  //   } else if (type == 1) {
-  //     return signal(createDefaultCardStats());
-  //   } else {
-  //     if (stats) {
-  //       return signal(stats);
-  //     } else {
-  //       return signal(createDefaultCardStats());
-  //     }
-  //   }
-  // }
-
-  // createRandomStatsSignal():Signal<CardStats> {
-  //   return signal({
-  //       activeArrows: Math.floor(Math.random() * 256),
-  //       attackPower: Math.floor(Math.random() * 256),
-  //       attackStyle: AttackStyle.PHYSICAL,
-  //       physicalDefense: Math.floor(Math.random() * 256),
-  //       magicalDefense: Math.floor(Math.random() * 256)
-  //     });
-  // }
+      activeArrows: activeArrows,
+      attackPower: attackPower,
+      attackStyle: attackStyle,
+      physicalDefense: physicalDefense,
+      magicalDefense: magicalDefense
+    }
+  }
   
+  playSelectedCard(gridRow: number, gridColumn: number) {
+    const gridIndex = 4 * gridRow + gridColumn;
+    if (this.selectedCard && (this.gridCards[gridIndex]).cardDisplay == CardDisplay.EMPTY) {
+      //Add the stats of the selected card to the selected empty space in the grid.
+      this.gridCards[gridIndex].cardDisplay = CardDisplay.FRIEND;
+      this.gridCards[gridIndex].cardStats = this.selectedCard.cardStats;
+      this.gridCards[gridIndex].isSelected = false;
+
+      //Remove the card from the player's hand
+
+      //Initiate the battle phase against any neighboring oppenent cards
+    }
+  }
 
   counter(count: number): number[] {
     return Array.from({ length: count }, (_, i) => i);

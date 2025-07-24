@@ -1,4 +1,4 @@
-import { AfterViewChecked, AfterViewInit, Component, effect, Input, OnChanges, OnInit, Signal, SimpleChanges } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, effect, Input, OnChanges, OnInit, Signal, SimpleChange, SimpleChanges } from '@angular/core';
 import { AttackStyle, CardDisplay, CardStats } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 
@@ -38,10 +38,6 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
 
   ngOnInit(): void {
     this.calculateDisplayValues();
-    // effect(() => {
-    //   console.log('card info changed');
-    //   console.log(this.cardStats);
-    // })
   }
 
   ngAfterViewInit(): void {
@@ -50,12 +46,7 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // if (changes['cardOwner']) {
-    //   this.setCardDisplay();
-    // } else
-    // console.log(changes);
     if (changes['isSelected'] !== undefined) {
-      // console.log('selected a card baby');
       let cardHTMLElement = document.getElementById('card-' + this.id);
       if (cardHTMLElement) {
         if (changes['isSelected'].currentValue) {
@@ -67,6 +58,7 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
     }
 
     this.setCardDisplay(); //Update display after changes have been applied
+    this.calculateDisplayValues();
   }
 
   ngAfterViewChecked(): void {
@@ -81,9 +73,6 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
     let shifter = 1;
     
     for (let i = 0; i < 8; i++) {
-      // if (shifter & this.cardStats().activeArrows) {
-      //   cardHTMLElementChildren?.item(i)?.classList.add('active');
-      // }
       if (shifter & this.cardStats.activeArrows) {
         cardHTMLElementChildren?.item(i)?.classList.add('active');
       }
@@ -94,9 +83,6 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
 
   calculateDisplayValues() {
     if (this.cardStats !== undefined) {
-      // this.displayAttackPower = this.findNearestHexNumber(this.cardStats().attackPower);
-      // this.displayPhysicalDefense = this.findNearestHexNumber(this.cardStats().physicalDefense);
-      // this.displayMagicalDefense = this.findNearestHexNumber(this.cardStats().magicalDefense);
       this.displayAttackPower = this.findNearestHexNumber(this.cardStats.attackPower);
       this.displayPhysicalDefense = this.findNearestHexNumber(this.cardStats.physicalDefense);
       this.displayMagicalDefense = this.findNearestHexNumber(this.cardStats.magicalDefense);

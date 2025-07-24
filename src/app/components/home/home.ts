@@ -49,7 +49,6 @@ export class Home implements OnInit {
       while (true) {
         const blockerLocation = Math.floor(Math.random() * 16);
         if (!(assignedBlockers & (1 << blockerLocation))) {
-          // this.cardDisplays[blockerLocation] = CardDisplay.BLOCKED;
           assignedBlockers |= (1 << blockerLocation);
           break;
         }
@@ -59,7 +58,9 @@ export class Home implements OnInit {
     //Once blockers are assigned create cards and place them into the grid
     //array. These cards will eventually have their stats overriden by player cards.
     for (let i: number = 0; i < 16; i++) {
-      this.gridCards.push({cardStats: this.createDefaultStats(),
+      this.gridCards.push({
+        id: i,
+        cardStats: this.createDefaultStats(),
         isSelected: false,
         cardDisplay: (assignedBlockers & (1 << i)) ? CardDisplay.BLOCKED : CardDisplay.EMPTY});
     }
@@ -72,28 +73,41 @@ export class Home implements OnInit {
     this.playerCards = []; //clear out any existing cards
 
     for (let i:number = 0; i < 5; i++) {
-      this.playerCards.push({cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.FRIEND });
-      this.opponentCards.push({cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.BACK });
+      this.opponentCards.push({id: i + 100, cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.BACK });
+      this.playerCards.push({id: i + 105, cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.FRIEND });
     }
   }
 
-  selectPlayerCard(cardId: number) {
-    //The player has selected a card from their card holder, first iterate over
-    //all the cards in the holder and remove the selected status from anything
-    //that has it. Then apply the selected status to the given card.
-    for (let i:number = 0; i < this.playerCards.length; i++) {
-      if (i == cardId) {
-        //flip the currently selected card from its current value
-        this.playerCards[i].isSelected = !this.playerCards[i].isSelected;
-        if (this.playerCards[i].isSelected) {
-          this.selectedCard = this.playerCards[i];
-        } else {
-          this.selectedCard = null;
-        }
-      } else if (this.playerCards[i].isSelected) {
-        this.playerCards[i].isSelected = false;
+  // selectPlayerCard(cardId: number) {
+  //   //The player has selected a card from their card holder, first iterate over
+  //   //all the cards in the holder and remove the selected status from anything
+  //   //that has it. Then apply the selected status to the given card.
+  //   for (let i:number = 0; i < this.playerCards.length; i++) {
+  //     if (i == cardId) {
+  //       //flip the currently selected card from its current value
+  //       this.playerCards[i].isSelected = !this.playerCards[i].isSelected;
+  //       if (this.playerCards[i].isSelected) {
+  //         this.selectedCard = this.playerCards[i];
+  //       } else {
+  //         this.selectedCard = null;
+  //       }
+  //     } else if (this.playerCards[i].isSelected) {
+  //       this.playerCards[i].isSelected = false;
+  //     }
+  //   }
+  // }
+
+  selectPlayerCard(card: CardInfo) {    
+    //First iterate over all other cards in the player's hand and make sure they're deselected
+    for (let playerCard of this.playerCards) {
+      if (playerCard.id != card.id && playerCard.isSelected) {
+        playerCard.isSelected = false; //only set if current value is true
       }
     }
+
+    //Then flip the selection status of the selected card (deselecting is an option)
+    card.isSelected = !card.isSelected;
+    this.selectedCard = card.isSelected ? card : null;
   }
 
   createDefaultStats() {
@@ -142,6 +156,8 @@ export class Home implements OnInit {
       this.gridCards[gridIndex].isSelected = false;
 
       //Remove the card from the player's hand
+      this.playerCards = this.playerCards.filter(keepCard => keepCard.id !== this.selectedCard?.id);
+      this.selectedCard = null;
 
       //Initiate the battle phase against any neighboring oppenent cards
     }

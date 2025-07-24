@@ -2,7 +2,7 @@
     <div class="enemy-card-holder">
         <app-card *ngFor="let i of counter(5)"
         [ngClass]="'slot-' + i"
-        [id]="100 + i"
+        [id]="opponentCards[i].id"
         [cardDisplay]="opponentCards[i].cardDisplay"
         [cardStats]="opponentCards[i].cardStats"></app-card>
     </div>
@@ -15,11 +15,11 @@
         </div>
     </div>
     <div class="player-card-holder">
-        <app-card *ngFor="let i of counter(5)"
-        [id]="105 + i"
-        [cardDisplay]="playerCards[i].cardDisplay"
-        [cardStats]="playerCards[i].cardStats"
-        [isSelected]="playerCards[i].isSelected"
-        (click)="selectPlayerCard(i)"></app-card>
+        <app-card *ngFor="let card of playerCards"
+        [id]="card.id"
+        [cardDisplay]="card.cardDisplay"
+        [cardStats]="card.cardStats"
+        [isSelected]="card.isSelected"
+        (click)="selectPlayerCard(card)"></app-card>
     </div>
 </div>

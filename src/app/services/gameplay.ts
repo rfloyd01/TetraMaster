@@ -51,7 +51,7 @@ export class Gameplay {
     //First create an array representing the 8 cardinal directions around the placed card.
     //If there are opposing cards in that spot relative to the new card then a reference will
     //be added to this array.
-    let actionArray = this.generateActionArray(battleCard, board);
+    let actionArray = this.generateActionArray(battleCard, board, false);
 
     //If there is a single battle in the action array then carry it out, if there are multiple battles
     //the player gets to decide which battle to start first.
@@ -64,10 +64,12 @@ export class Gameplay {
       if (this.handleCardBattle(battleCard, defendingCard) == battleCard.id) {
         //The attacking card has won, initiate a chain to steal any enemy cards that are touching
         //arrows of the defending card
-        console.log('Attacking card wins');
+        defendingCard.cardDisplay = battleCard.cardDisplay;
+        let chainedCards = this.generateActionArray(defendingCard, board, true);
+        console.log('chained card array: ' + chainedCards);
+        this.captureDefenselessCards(defendingCard, chainedCards, board);
       } else {
         //The attacking card has lost, convert it to the other team and return from this method
-        console.log('Attacking card loses');
         battleCard.cardDisplay = defendingCard.cardDisplay;
       }
 
@@ -79,16 +81,12 @@ export class Gameplay {
 
     //Once all battles are complete, any cards listed as 'capture' in the action array
     //should switch to the other team.
-    for (let cardinalDirection of ORDERED_CARDINAL_DIRECTIONS) {
-      if (actionArray[cardinalDirectionToIndex(cardinalDirection)] == 'capture') {
-        board[battleCard.id + cardinalDirectionNeighbor(cardinalDirection)].cardDisplay = battleCard.cardDisplay;
-      }
-    }
+    this.captureDefenselessCards(battleCard, actionArray, board);
 
     return true;
   }
 
-  generateActionArray(battleCard: CardInfo, board: CardInfo[]) {
+  generateActionArray(battleCard: CardInfo, board: CardInfo[], chain: boolean) {
     let actionArray: (string | null)[] = [null, null, null, null, null, null, null, null]; //TODO: Consider using enum here
 
     //TODO: Instead of iterating over all directions, iterate over directions based on location
@@ -104,7 +102,9 @@ export class Gameplay {
         //If the neighboring card has an opposing arrow then set the appropriate index of the 
         //action array to 'battle', otherwise set it to 'capture'
         const opposingArrowDirection = getOppositeCardinalDirection(direction);
-        if (neighboringCard.cardStats.activeArrows & opposingArrowDirection) {
+        if (chain) {
+          actionArray[cardinalDirectionToIndex(direction)] = 'chain'; 
+        } else if (neighboringCard.cardStats.activeArrows & opposingArrowDirection) {
           actionArray[cardinalDirectionToIndex(direction)] = 'battle'; //TODO: Consider using enum here
         } else {
           actionArray[cardinalDirectionToIndex(direction)] = 'capture'; //TODO: Consider using enum here
@@ -186,6 +186,15 @@ export class Gameplay {
       case AttackStyle.MAGICAL : return defendingCardStats.magicalDefense;
       case AttackStyle.FLEXIBLE: return Math.min(defendingCardStats.physicalDefense, defendingCardStats.magicalDefense);
       case AttackStyle.ASSUALT : return Math.min(defendingCardStats.attackPower, defendingCardStats.physicalDefense, defendingCardStats.magicalDefense);
+    }
+  }
+
+  captureDefenselessCards(capturingCard: CardInfo, neighboringCards: (string | null)[], board: CardInfo[]) {
+    for (let cardinalDirection of ORDERED_CARDINAL_DIRECTIONS) {
+      const text = neighboringCards[cardinalDirectionToIndex(cardinalDirection)];
+      if (text == 'capture' || text == 'chain') {
+        board[capturingCard.id + cardinalDirectionNeighbor(cardinalDirection)].cardDisplay = capturingCard.cardDisplay;
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-<button *ngIf="gamePhase >= 12" (click)="startNewGame()">Play Again</button>
+<button class="game-button" *ngIf="gamePhase >= 12" (click)="startNewGame()">Play Again</button>
 <div class="card-board">
     <div class="enemy-card-holder">
         <app-card *ngFor="let card of opponentCards; let i = index"

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { CardDisplay, CardinalDirection, CardInfo } from '../util/card-types';
-import { cardinalDirectionNeighbor, cardinalDirectionToIndex, getOppositeCardinalDirection, ORDERED_CARDINAL_DIRECTIONS, removeCardFromHandById } from '../util/card-util';
+import { AttackStyle, CardDisplay, CardinalDirection, CardInfo, CardStats } from '../util/card-types';
+import { cardinalDirectionNeighbor, cardinalDirectionToIndex, getOppositeCardinalDirection, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../util/card-util';
 
 @Injectable({
   providedIn: 'root'
@@ -24,12 +24,12 @@ export class Gameplay {
     //or card stats.
 
     //First pick a random card for the opponent
-    const playCard = oppentsCards[Math.floor(Math.random() * oppentsCards.length)];
+    const playCard = oppentsCards[randomInteger(oppentsCards.length)];
 
     //Next pick a random open slot on the board. Make this step easier
     //by first filtering out all non-empty spaces.
     const emptySpaces = gameBoard.filter(space => space.cardDisplay == CardDisplay.EMPTY);
-    let playSpace = emptySpaces[Math.floor(Math.random() * emptySpaces.length)];
+    let playSpace = emptySpaces[randomInteger(emptySpaces.length)];
 
     //Finally, update the space with the selected card's info and remove the 
     //card from the opponent's hand
@@ -40,7 +40,7 @@ export class Gameplay {
     this.initiateCardBattles(playSpace, gameBoard);
   }
 
-  initiateCardBattles(battleCard: CardInfo, board: CardInfo[]) {
+  initiateCardBattles(battleCard: CardInfo, board: CardInfo[]): boolean {
     //When a card is placed on the board, if one of its arrows faces a card from the 
     //other player then a card battle will be initiated. If the opposing card doesn't
     //have a reciprical arrow pointing at the new card, then the opposing card will be 
@@ -55,7 +55,27 @@ export class Gameplay {
 
     //If there is a single battle in the action array then carry it out, if there are multiple battles
     //the player gets to decide which battle to start first.
-    //TODO: Implement battle loop
+    let battleCount = actionArray.filter(item => item === 'battle').length;
+    if (battleCount == 1) {
+      //Carry out the single battle
+      const defendingCardDirection = ORDERED_CARDINAL_DIRECTIONS[actionArray.indexOf('battle')];
+      let defendingCard = board[battleCard.id + cardinalDirectionNeighbor(defendingCardDirection)];
+
+      if (this.handleCardBattle(battleCard, defendingCard) == battleCard.id) {
+        //The attacking card has won, initiate a chain to steal any enemy cards that are touching
+        //arrows of the defending card
+        console.log('Attacking card wins');
+      } else {
+        //The attacking card has lost, convert it to the other team and return from this method
+        console.log('Attacking card loses');
+        battleCard.cardDisplay = defendingCard.cardDisplay;
+      }
+
+    } else if (battleCount >= 1) {
+      console.log('found multiple battles')
+      //TODO: add text letting user decide
+      return false;
+    }
 
     //Once all battles are complete, any cards listed as 'capture' in the action array
     //should switch to the other team.
@@ -64,6 +84,8 @@ export class Gameplay {
         board[battleCard.id + cardinalDirectionNeighbor(cardinalDirection)].cardDisplay = battleCard.cardDisplay;
       }
     }
+
+    return true;
   }
 
   generateActionArray(battleCard: CardInfo, board: CardInfo[]) {
@@ -137,5 +159,33 @@ export class Gameplay {
     }
 
     return neighborsOk && (board[currentCard.id + cardinalDirectionNeighbor(direction)].cardDisplay == opponentDisplay);
+  }
+
+  handleCardBattle(attackingCard: CardInfo, defendingCard: CardInfo): number {
+    //This method carries out the logic for a single card battle and returns the id of the 
+    //winning card. The way that a battle works is as follows:
+    //
+    //1. The defending card's appropriate stat is picked based on the attack type of the attacking card
+    //    - P = Physical Defense, M = Magical Defense, X = Lower of Physical and Magical, A = Lower of Attack, Physical D and Magical D
+    //2. Choose a random number, s, between 0 and Attacking card's attack, x
+    //3. Choose a random number, r, between 0 and Defending card's defense, y
+    //4. If (x - s) > (y - r) the attacking card wins, otherwise the defending card wins (tie goes to defense)
+    //5. If the attacking card wins, a chain is initiated, otherwise the battle is over
+    const defense = this.getDefenseiveNumber(attackingCard.cardStats.attackStyle, defendingCard.cardStats);
+    const attackRoll = randomInteger(attackingCard.cardStats.attackPower);
+    const attackDiff = attackingCard.cardStats.attackPower - attackRoll;
+    const defenseRoll = randomInteger(defense);
+    const defenseDiff = defense - defenseRoll;
+
+    return (attackDiff > defenseDiff) ? attackingCard.id : defendingCard.id;
+  }
+
+  getDefenseiveNumber(attackType: AttackStyle, defendingCardStats:CardStats): number {
+    switch (attackType) {
+      case AttackStyle.PHYSICAL: return defendingCardStats.physicalDefense;
+      case AttackStyle.MAGICAL : return defendingCardStats.magicalDefense;
+      case AttackStyle.FLEXIBLE: return Math.min(defendingCardStats.physicalDefense, defendingCardStats.magicalDefense);
+      case AttackStyle.ASSUALT : return Math.min(defendingCardStats.attackPower, defendingCardStats.physicalDefense, defendingCardStats.magicalDefense);
+    }
   }
 }

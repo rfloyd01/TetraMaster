@@ -1,3 +1,7 @@
+.game-button {
+    position: absolute;
+}
+
 .card-board {
     display: flex;
     justify-content: space-around;
@@ -24,7 +28,7 @@
 .enemy-card-holder {
     position: relative;
     height: 80vh;
-    width: 200px;
+    width: 18.333vh;
     margin-top: 0.5vh;
 }
 
@@ -32,6 +36,7 @@
     transform: scale(0.827);
     transform-origin: top left;
     margin-top: 0.5vh;
+    width: 18.333vh;
 }
 
 .enemy-card-holder .slot-0 {

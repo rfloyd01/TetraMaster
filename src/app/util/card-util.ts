@@ -3,6 +3,40 @@ import { CardinalDirection, CardInfo } from "./card-types";
 export const ORDERED_CARDINAL_DIRECTIONS = [CardinalDirection.NW, CardinalDirection.N, CardinalDirection.NE, CardinalDirection.E,
     CardinalDirection.SE, CardinalDirection.S, CardinalDirection.SW, CardinalDirection.W];
 
+export function randomInteger(ceiling: number, floor?: number, ) {
+    //Generates a random integer between the given floor and ceiling.
+    if (!floor) {
+        floor = 0;
+    }
+
+    if (ceiling < floor) {
+        console.warn('error generating random number');
+        return 0;
+    } else if (ceiling == floor) {
+        return ceiling;
+    }
+
+    //In an attempt to get good, uniform, random numbers the getRandomValues method from the
+    //cryptology library is used. Normally to ensure that a random number generated like this
+    //is within the supplied range we would modulus divide it. If the supplied range dosn't
+    //divide (2^32 - 1) evenly then a uniform distibution won't be possible (i.e. some numbers
+    //will never pop up and other numbers will appear more frequently).
+
+    //To fix this problem, find the maximum 32-bit integer that the supplied range will evenly divide 
+    //into, and reject any random number that's larger than this limit.
+    const range = ceiling - floor;
+    const max = Math.floor(0xFFFFFFFF / range) * range;
+    const array = new Uint32Array(1);
+
+    let randomNumber: number;
+    do {
+        crypto.getRandomValues(array);
+        randomNumber = array[0];
+    } while (randomNumber > max)
+    
+    return randomNumber % range + floor;
+}
+
 export function removeCardFromHandById(id: number, hand: CardInfo[]) {
     const index = hand.findIndex(item => item.id === id);
     if (index !== -1) {

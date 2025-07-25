@@ -3,7 +3,7 @@ import { Card } from '../card/card';
 import { AttackStyle, CardDisplay, CardInfo } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 import { Gameplay } from '../../services/gameplay';
-import { removeCardFromHandById } from '../../util/card-util';
+import { randomInteger, removeCardFromHandById } from '../../util/card-util';
 
 @Component({
   selector: 'app-home',
@@ -57,13 +57,13 @@ export class Home implements OnInit {
   createRandomBoard() {
     //First generate a random number between 0 and 6, this will represent how many slots
     //in the board are blocked off.
-    const blockers = Math.floor(Math.random() * 6);
+    const blockers = randomInteger(6);
 
     //Randomly assign the blockers
     let assignedBlockers:number = 0b0;
     for (let i:number = 0; i < blockers; i++) {
       while (true) {
-        const blockerLocation = Math.floor(Math.random() * 16);
+        const blockerLocation = randomInteger(16);
         if (!(assignedBlockers & (1 << blockerLocation))) {
           assignedBlockers |= (1 << blockerLocation);
           break;
@@ -118,7 +118,7 @@ export class Home implements OnInit {
   createRandomStats() {
     //Generate the AttackStyle. There's an 90% chance for a standard attack type,
     //9% chance for the Flexible style and a 1% chance for Assault style
-    let attackStyleNum = Math.floor(Math.random() * 100);
+    let attackStyleNum = randomInteger(100)
     let attackStyle: AttackStyle;
 
     if (attackStyleNum < 90) {
@@ -133,8 +133,7 @@ export class Home implements OnInit {
       attackStyle = AttackStyle.ASSUALT;
     }
 
-    return this.createStats(Math.floor(Math.random() * 256), Math.floor(Math.random() * 256),
-              attackStyle, Math.floor(Math.random() * 256), Math.floor(Math.random() * 256));
+    return this.createStats(randomInteger(256), randomInteger(256), attackStyle, randomInteger(256), randomInteger(256));
   }
 
   createStats(activeArrows: number, attackPower: number, attackStyle: AttackStyle,
@@ -178,7 +177,7 @@ export class Home implements OnInit {
     if (this.gamePhase == 1) {
       //A new game has been started. Randomly select who will go first
       //and then advance the game
-      this.playerGoesFirst = Math.floor(Math.random() * 2);
+      this.playerGoesFirst = randomInteger(2);
       this.advanceGame();
     } else if (this.gamePhase == 12) {
       //Display buttons that will either start a new game or quit

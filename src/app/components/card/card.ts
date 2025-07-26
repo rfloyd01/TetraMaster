@@ -33,8 +33,7 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
   cardText: string = '';
 
   //Timing Variables
-  timerObservable!: Subscription | null;
-  
+  timerSub!: Subscription | null;
 
   displayAttackPower: string = '0';
   displayPhysicalDefense: string = '0';
@@ -72,7 +71,7 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
       if (this.cardText.includes('Timer')) {
         //Check to see that there isn't already a timer in place, if not, then
         //start a new one. This check prevents accidentally restarting the timer
-        if (!this.timerObservable) {
+        if (!this.timerSub) {
           this.createTimerSubscription();
         } else {
           console.log('couldn\'t start timer');
@@ -197,12 +196,12 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
     //Just to give the user some time to register the fist number,
     //wait for a tiny bit before starting to tick it down
     setTimeout(() => {
-      this.timerObservable = interval(calculatedInterval).subscribe(() => {
+      this.timerSub = interval(calculatedInterval).subscribe(() => {
         this.cardText = String(times[0]--);
         if (times[0] <= times[1]) {
           this.cardText = '';
-          this.timerObservable?.unsubscribe();
-          this.timerObservable = null;
+          this.timerSub?.unsubscribe();
+          this.timerSub = null;
         }
       });
     }, CARD_TIMER_INITIAL_DISPLAY);

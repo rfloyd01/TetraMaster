@@ -4,6 +4,7 @@ import { AttackStyle, CardDisplay, CardInfo } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 import { Gameplay } from '../../services/gameplay';
 import { cardinalDirectionNeighbor, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../../util/card-util';
+import { GameState } from '../../util/gameplay-types';
 
 @Component({
   selector: 'app-home',
@@ -24,15 +25,22 @@ export class Home implements OnInit {
   //State Variables
   gamePhase!: number;
   selectedCard!: CardInfo | null;
-  currentBattleCard!: CardInfo | null;
+  // currentBattleCard!: CardInfo | null;
   playerGoesFirst!: number;
   playerCanMove!: boolean;
+  selectionType!: number;
 
   constructor(private gameplayService: Gameplay) {
   }
 
   ngOnInit(): void {
     this.startNewGame();
+    this.gameplayService.gameplayUpdate.subscribe(
+      (value) => {
+        // this.handleGameStateUpdate(value);
+        this.advanceGame(value);
+      }
+    )
   }
 
   startNewGame() {
@@ -41,7 +49,7 @@ export class Home implements OnInit {
     this.resetGameVariables();
     this.createRandomBoard();
     this.createPlayerCards();
-    this.advanceGame();
+    // this.advanceGame();
   }
 
   resetGameVariables() {
@@ -51,9 +59,10 @@ export class Home implements OnInit {
 
     this.gamePhase = 0;
     this.selectedCard = null;
-    this.currentBattleCard = null;
+    // this.currentBattleCard = null;
     this.playerGoesFirst = 0;
     this.playerCanMove = false;
+    this.selectionType = 0; //Selecting a grid space will either play a card, or choose an opponent card for battle
   }
 
   createRandomBoard() {
@@ -150,9 +159,16 @@ export class Home implements OnInit {
       magicalDefense: magicalDefense
     }
   }
+
+  handleSelection(gridIndex: number, selectionType: number) {
+    if (selectionType == 0) {
+      this.playSelectedCard(gridIndex);
+    } else {
+      this.chooseOpponentCardToBattle(gridIndex);
+    }
+  }
   
-  playSelectedCard(gridRow: number, gridColumn: number) {
-    const gridIndex = 4 * gridRow + gridColumn;
+  playSelectedCard(gridIndex: number) {
     if (this.selectedCard && (this.gridCards[gridIndex]).cardDisplay == CardDisplay.EMPTY) {
       //Add the stats of the selected card to the selected empty space in the grid.
       this.gridCards[gridIndex].cardDisplay = CardDisplay.FRIEND;
@@ -166,80 +182,86 @@ export class Home implements OnInit {
       //If a multi-battle scenario pops up, lock player out from selecting another card mid-turn
       this.playerCanMove = false;
 
-      //Initiate the battle phase against any neighboring oppenent cards
-      if (this.gameplayService.initiateCardBattles(this.gridCards[gridIndex], this.gridCards) == -1) {
-        //If this method returns a -1 it means that we need user input for selecting an 
-        //opponent card to attack
-        this.currentBattleCard = this.gridCards[gridIndex];
-        return; //return without advancing the game
-      }
+      //After placing card on board and removing from hand, initiate game play sequence
+      this.gameplayService.playersTurn(this.gridCards[gridIndex], this.gridCards);
+    } 
+  }
 
-    } else if (this.currentBattleCard && this.gridCards[gridIndex].cardText == 'Select a Card') {
-      //When the player selects a card to battle, the initiateCardBattles method is called with a 
-      //non-null action array which will have a single battle element. This will force a battle to 
-      //take place with the selected card.
-      let fauxActionArray: (string | null)[] = [];
-      let addBattleString;
-      console.log('Current battle card: ' + JSON.stringify(this.currentBattleCard));
-      for (let i = 0; i < 8; i++) {
-        addBattleString = false;
-        if (this.gameplayService.checkForNeighboringCard(this.currentBattleCard, ORDERED_CARDINAL_DIRECTIONS[i], this.gridCards, this.gridCards[gridIndex].cardDisplay)) {
-          if ((gridIndex - this.currentBattleCard.id) == cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])) {
-            addBattleString = true;
-          }
+  chooseOpponentCardToBattle(gridIndex: number) {
+    //When the player selects a card to battle, the initiateCardBattles method is called with a 
+    //non-null action array which will have a single battle element. This will force a battle to 
+    //take place with the selected card.
+    // if (this.gameplayService.savedBattleCard) {
+      
+      // const battleCardId= this.currentBattleCard.id; //save id before setting null for potential recursive call of this method
+      
 
-          //Remove any text displayed on each of the neighboring cards
-          console.log('Removing text from following card: ' + JSON.stringify(this.gridCards[this.currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])]));
-          if (this.gridCards[this.currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText != '') {
-            this.gridCards[this.currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText = '';
-          }
+      // if (battleResult == 1) {
+      //   //The battle was won by the attacking card so the turn goes on. Depending on how any chain reactions
+      //   //went there may or may not be more battles/chaining that need to happen. Instead of calling the battle
+      //   //method directly, recursively call the playSelectedCard method so new action array can be calculated.
+      //   this.playSelectedCard(battleCardId);
+      // }
+    // }
+    const currentBattleCard = this.gameplayService.attackingCard;
+    if (currentBattleCard == null) {
+      return
+    }
+    
+    let fauxActionArray: (string | null)[] = [];
+    let addBattleString;
+    for (let i = 0; i < 8; i++) {
+      addBattleString = false;
+      if (this.gameplayService.checkForNeighboringCard(currentBattleCard, ORDERED_CARDINAL_DIRECTIONS[i], this.gridCards, this.gridCards[gridIndex].cardDisplay)) {
+        if ((gridIndex - currentBattleCard.id) == cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])) {
+          addBattleString = true;
         }
 
-        if (addBattleString) {
-          fauxActionArray.push('battle');
-        } else {
-          fauxActionArray.push(null);
+        //Remove any text displayed on each of the neighboring cards
+        console.log('Removing text from following card: ' + JSON.stringify(this.gridCards[currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])]));
+        if (this.gridCards[currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText != '') {
+          this.gridCards[currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText = '';
         }
       }
 
-      console.log(fauxActionArray);
-
-      //Initiate the selected battle, regardless of outcome of this battle the current battle card is set
-      //back to a null value
-      const battleResult = this.gameplayService.initiateCardBattles(this.currentBattleCard, this.gridCards, fauxActionArray);
-      const battleCardId= this.currentBattleCard.id; //save id before setting null for potential recursive call of this method
-      this.currentBattleCard = null;
-
-      if (battleResult == 1) {
-        //The battle was won by the attacking card so the turn goes on. Depending on how any chain reactions
-        //went there may or may not be more battles/chaining that need to happen. Instead of calling the battle
-        //method directly, recursively call the playSelectedCard method so new action array can be calculated.
-        this.playSelectedCard(Math.floor(battleCardId / 4), battleCardId % 4);
+      if (addBattleString) {
+        fauxActionArray.push('battle');
+      } else {
+        fauxActionArray.push(null);
       }
     }
 
-    //When above logic is complete, advance the game
-    this.advanceGame();
+    //Initiate the selected battle, regardless of outcome of this battle the current battle card is set
+    //back to a null value
+    this.gameplayService.playersTurn(currentBattleCard, this.gridCards, fauxActionArray);
   }
 
-  advanceGame() {
+  advanceGame(state: GameState) {
     //There are 12 phases of the game.
     //Phase 1 - Coin flip to see who goes first
     //Phases 2 through 11 - Players put cards onto the board
     //Phase 12 - Game is over with option to play again or quit
     this.gamePhase++;
 
-    if (this.gamePhase == 1) {
+    // if (this.gamePhase == 1) {
+    if (state == GameState.GAME_START) {
       //A new game has been started. Randomly select who will go first
       //and then advance the game
-      this.playerGoesFirst = randomInteger(2);
-      this.advanceGame();
-    } else if (this.gamePhase == 12) {
+      setTimeout(() => {
+        this.gameplayService.startNewGame();
+      }, 10); //TODO: Animate coin flip here and increase timeout time
+    } else if (state == GameState.PLAYER_SELECT_BATTLE) {
+      //If the player puts down a card and two or more opponent cards have matching
+      //arrows, the player will need to choose which of the opponent cards to 
+      //battle with.
+      this.selectionType = 1;
+    } else if (state == GameState.GAME_END) {
       //Display buttons that will either start a new game or quit
     } else {
       //It will either be the player's or opponent's turn depending
       //on who won the coin toss
-      if (this.gamePhase % 2 == this.playerGoesFirst) {
+      // if (this.gamePhase % 2 == this.playerGoesFirst) {
+      if (state == GameState.PLAYER_TURN) {
         this.startPlayerTurn();
       } else {
         this.opponentsTurn();
@@ -249,9 +271,8 @@ export class Home implements OnInit {
   }
 
   startPlayerTurn() {
-    //Let the player select a card again. The game will advance
-    //after a move is made by them
-    this.playerCanMove = true;
+    this.playerCanMove = true; //allows player to select card from inventory
+    this.selectionType = 0; //makes sure selected card will be placed onto the board
   }
 
   opponentsTurn() {
@@ -262,8 +283,9 @@ export class Home implements OnInit {
     //but wrap this in a slight delay so it looks like the opponent
     //is thinking for a bit
     setTimeout(() => {
-      this.gameplayService.randomizeOpponentsTurn(this.opponentCards, this.gridCards); //TODO: For now simply make the opponent move to a random location
-      this.advanceGame();
+      //this.gameplayService.randomizeOpponentsTurn(this.opponentCards, this.gridCards); //TODO: For now simply make the opponent move to a random location
+      this.gameplayService.opponentsTurn(this.opponentCards, this.gridCards);
+      // this.advanceGame();
     }, 1000);
   }
 

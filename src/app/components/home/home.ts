@@ -23,21 +23,19 @@ export class Home implements OnInit {
   opponentCards!: CardInfo[];
 
   //State Variables
-  gamePhase!: number;
   selectedCard!: CardInfo | null;
-  // currentBattleCard!: CardInfo | null;
-  playerGoesFirst!: number;
   playerCanMove!: boolean;
   selectionType!: number;
+  displayButtons!: boolean;
 
   constructor(private gameplayService: Gameplay) {
   }
 
   ngOnInit(): void {
-    this.startNewGame();
+    //Subscribe to the gameplay update subscription
+    //which is responsible for advancing the game state
     this.gameplayService.gameplayUpdate.subscribe(
       (value) => {
-        // this.handleGameStateUpdate(value);
         this.advanceGame(value);
       }
     )
@@ -49,7 +47,7 @@ export class Home implements OnInit {
     this.resetGameVariables();
     this.createRandomBoard();
     this.createPlayerCards();
-    // this.advanceGame();
+    this.gameplayService.startNewGame();
   }
 
   resetGameVariables() {
@@ -57,12 +55,10 @@ export class Home implements OnInit {
     this.playerCards = [];
     this.opponentCards = [];
 
-    this.gamePhase = 0;
     this.selectedCard = null;
-    // this.currentBattleCard = null;
-    this.playerGoesFirst = 0;
     this.playerCanMove = false;
     this.selectionType = 0; //Selecting a grid space will either play a card, or choose an opponent card for battle
+    this.displayButtons = false;
   }
 
   createRandomBoard() {
@@ -183,31 +179,19 @@ export class Home implements OnInit {
       this.playerCanMove = false;
 
       //After placing card on board and removing from hand, initiate game play sequence
-      this.gameplayService.playersTurn(this.gridCards[gridIndex], this.gridCards);
+      this.gameplayService.battlePhase(this.gridCards[gridIndex], this.gridCards);
     } 
   }
 
   chooseOpponentCardToBattle(gridIndex: number) {
-    //When the player selects a card to battle, the initiateCardBattles method is called with a 
-    //non-null action array which will have a single battle element. This will force a battle to 
-    //take place with the selected card.
-    // if (this.gameplayService.savedBattleCard) {
-      
-      // const battleCardId= this.currentBattleCard.id; //save id before setting null for potential recursive call of this method
-      
-
-      // if (battleResult == 1) {
-      //   //The battle was won by the attacking card so the turn goes on. Depending on how any chain reactions
-      //   //went there may or may not be more battles/chaining that need to happen. Instead of calling the battle
-      //   //method directly, recursively call the playSelectedCard method so new action array can be calculated.
-      //   this.playSelectedCard(battleCardId);
-      // }
-    // }
+    //When the player puts down a card, if multiple battles are possible then the player will need to select
+    //which of the opponents cards to battle. This method handles the logic for selecting the opponent card
+    //and removing text from the cards.
     const currentBattleCard = this.gameplayService.attackingCard;
     if (currentBattleCard == null) {
       return
     }
-    
+
     let fauxActionArray: (string | null)[] = [];
     let addBattleString;
     for (let i = 0; i < 8; i++) {
@@ -233,41 +217,54 @@ export class Home implements OnInit {
 
     //Initiate the selected battle, regardless of outcome of this battle the current battle card is set
     //back to a null value
-    this.gameplayService.playersTurn(currentBattleCard, this.gridCards, fauxActionArray);
+    this.gameplayService.battlePhase(currentBattleCard, this.gridCards, fauxActionArray);
   }
 
   advanceGame(state: GameState) {
-    //There are 12 phases of the game.
-    //Phase 1 - Coin flip to see who goes first
-    //Phases 2 through 11 - Players put cards onto the board
-    //Phase 12 - Game is over with option to play again or quit
-    this.gamePhase++;
-
-    // if (this.gamePhase == 1) {
-    if (state == GameState.GAME_START) {
-      //A new game has been started. Randomly select who will go first
-      //and then advance the game
-      setTimeout(() => {
-        this.gameplayService.startNewGame();
-      }, 10); //TODO: Animate coin flip here and increase timeout time
-    } else if (state == GameState.PLAYER_SELECT_BATTLE) {
-      //If the player puts down a card and two or more opponent cards have matching
-      //arrows, the player will need to choose which of the opponent cards to 
-      //battle with.
-      this.selectionType = 1;
-    } else if (state == GameState.GAME_END) {
-      //Display buttons that will either start a new game or quit
-    } else {
-      //It will either be the player's or opponent's turn depending
-      //on who won the coin toss
-      // if (this.gamePhase % 2 == this.playerGoesFirst) {
-      if (state == GameState.PLAYER_TURN) {
-        this.startPlayerTurn();
-      } else {
-        this.opponentsTurn();
-      }
+    //Most of the game flow happens through the gameplay service, however,
+    //there are some things that the board component will handle depending
+    //on the current game state, for example, letting the player choose
+    //which card to play.
+    switch (state) {
+      case GameState.GAME_INIT:
+        {
+          //This is the initial value that gets emitted when the gameplay service is initialized
+          this.startNewGame();
+          break;
+        }
+      case GameState.GAME_START:
+        {
+          //A new game has been started. Randomly select who will go first
+          //and then advance the game
+          setTimeout(() => {
+            this.gameplayService.coinFlip();
+          }, 10); //TODO: Animate coin flip here and increase timeout time
+          break;
+        }
+      case GameState.PLAYER_SELECT_BATTLE:
+        {
+          //If the player puts down a card and two or more opponent cards have matching
+          //arrows, the player will need to choose which of the opponent cards to 
+          //battle with.
+          this.selectionType = 1;
+          break;
+        }
+      case GameState.GAME_END:
+        {
+          this.displayButtons = true;
+          break;
+        }
+      case GameState.PLAYER_TURN:
+        {
+          this.startPlayerTurn();
+          break;
+        }
+      case GameState.OPPONENT_TURN:
+        {
+          this.opponentsTurn();
+          break;
+        }
     }
-
   }
 
   startPlayerTurn() {
@@ -283,9 +280,7 @@ export class Home implements OnInit {
     //but wrap this in a slight delay so it looks like the opponent
     //is thinking for a bit
     setTimeout(() => {
-      //this.gameplayService.randomizeOpponentsTurn(this.opponentCards, this.gridCards); //TODO: For now simply make the opponent move to a random location
       this.gameplayService.opponentsTurn(this.opponentCards, this.gridCards);
-      // this.advanceGame();
     }, 1000);
   }
 

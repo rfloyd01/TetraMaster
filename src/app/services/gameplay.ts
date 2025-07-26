@@ -12,12 +12,11 @@ export class Gameplay {
   //This service implements logic for controlling a game. Card battles,
   //assigning
 
-  gameplayUpdate: BehaviorSubject<GameState> = new BehaviorSubject<GameState>(GameState.GAME_START);
+  gameplayUpdate: BehaviorSubject<GameState> = new BehaviorSubject<GameState>(GameState.GAME_INIT);
 
-  gameBoard!: CardInfo[]; //TODO: move board definition from home component to here
-  // savedBattleCard!: CardInfo | null;
   opponentLevel: number = -1;
   currentState: GameState = GameState.GAME_START;
+  cardsPlayed: number = 0;
 
   attackingCard!: CardInfo | null;
   defendingCard!: CardInfo | null;
@@ -28,42 +27,55 @@ export class Gameplay {
   }
 
   startNewGame() {
+    //Initialize variables with default values and then emit the Game Start state
+    this.setAndEmitState(GameState.GAME_START);
+  }
+
+  coinFlip() {
     //Randomly select one of the players to go first and then emit the appropriate game state
     this.setAndEmitState(randomInteger(3, 1));
   }
 
-  playersTurn(playedCard: CardInfo, gameBoard: CardInfo[], actionArray?:(string | null)[]) {
+  advanceToNextState() {
+    if (this.cardsPlayed == 10) {
+      this.cardsPlayed = 0;
+      this.setAndEmitState(GameState.GAME_END);
+    } else if (this.currentState == GameState.PLAYER_TURN || this.currentState == GameState.PLAYER_SELECT_BATTLE) {
+      this.setAndEmitState(GameState.OPPONENT_TURN);
+    } else if (this.currentState == GameState.OPPONENT_TURN) {
+      this.setAndEmitState(GameState.PLAYER_TURN);
+    }
+  }
+
+  battlePhase(playedCard: CardInfo, gameBoard: CardInfo[], actionArray?:(string | null)[]) {
     //This method get's called after the player puts a card onto the board. It will handle
     //Battles, capturing of enemy cards, etc. before advancing the game to the next state.
+    this.cardsPlayed++;
+
     if (playedCard == null) {
       console.warn('Incorrect card selection');
       return;
     }
 
     this.attackingCard = playedCard;
-    // console.log('initial action array: ' + actionArray);
     actionArray ??= this.generateActionArray(playedCard, gameBoard, false); //generate action array before battle phase
     const result = this.initiateCardBattles(gameBoard, actionArray);
-    // console.log('final action array: ' + actionArray);
 
     if (result == BattleResult.NO_BATTLE) {
       //If no battle occured then simply update the state, take any defenseless cards, and update the game state
       this.captureDefenselessCards(this.attackingCard, actionArray, gameBoard);
       this.attackingCard = null; //reset the attacking card
-      this.setAndEmitState(GameState.OPPONENT_TURN);
-    } else if (result == BattleResult.NEED_PLAYER_INPUT) {
+      this.advanceToNextState();
+    } else if ((this.currentState == GameState.PLAYER_TURN) && (result == BattleResult.NEED_PLAYER_INPUT)) {
       //If we need player input then we also immediately return from this method.
       //Save a copy of the current played card before emitting the state
-      // this.savedBattleCard = playedCard;
       this.setAndEmitState(GameState.PLAYER_SELECT_BATTLE);
     } else {
       //If a battle has occured we need to wrap any state updates inside of a timer. This is 
       //to ensure that there's enough time to animate the battle happening.
       setTimeout(() => {
-        console.log('A battle occured and the player...')
         if (this.attackingCard && this.defendingCard) {
-          if (result == BattleResult.WON_BATTLE) {
-            console.log('WON');
+          if (result != BattleResult.LOST_BATTLE) {
             //The player won the fight. Take over the enemy card as well as any chained cards.
             this.defendingCard.cardDisplay = this.attackingCard.cardDisplay;
             let chainedCards = this.generateActionArray(this.defendingCard, gameBoard, true);
@@ -73,14 +85,14 @@ export class Gameplay {
             //If the current state of the game is 'player select battle'
             //then it's possible there are more battles to carry out. Recursively call this method
             //with the same card but a null action array to continue
-            if (this.currentState == GameState.PLAYER_SELECT_BATTLE) {
-              this.playersTurn(playedCard, gameBoard);
+            //if (this.currentState == GameState.PLAYER_SELECT_BATTLE) {
+            if (result == BattleResult.NEED_PLAYER_INPUT) {
+              this.battlePhase(playedCard, gameBoard);
               return; //state emission will happen at lower recursion level so simply return
             } 
           } else {
             //The player lost the fight so the attacking card gets converted, no chaining happens
             //in this case though.
-            console.log('LOST')
             this.attackingCard.cardDisplay = this.defendingCard.cardDisplay;
           }
         } else {
@@ -90,7 +102,7 @@ export class Gameplay {
         //Change the state to opponents turn when player turn is done
         this.attackingCard = null; //if a battle card was saved during this turn remove it
         this.defendingCard = null;
-        this.setAndEmitState(GameState.OPPONENT_TURN);
+        this.advanceToNextState();
       }, CARD_TIMER_LENGTH  + CARD_TIMER_INITIAL_DISPLAY + 5);
     } 
   }
@@ -113,7 +125,7 @@ export class Gameplay {
       cardAndLocation.location.cardStats = cardAndLocation.card.cardStats;
       removeCardFromHandById(cardAndLocation.card.id, opponentsCards);
 
-      this.opponentBattlePhase(cardAndLocation.location, gameBoard);
+      this.battlePhase(cardAndLocation.location, gameBoard);
     } else {
       this.gameplayUpdate.next(GameState.GAME_END);
     }
@@ -134,53 +146,6 @@ export class Gameplay {
 
     //Return the selected card and board location
     return {card: playCard, location: playSpace};
-  }
-
-  opponentBattlePhase(playedCard: CardInfo, gameBoard: CardInfo[], actionArray?:(string | null)[]) {
-    //Since no user input is needed for the opponent, this wrapper method is used which can skip parts
-    //that would normally require user input during battle phase.
-    this.attackingCard = playedCard;
-
-    //Generate the action array based on the location the card is played and
-    actionArray ??= this.generateActionArray(playedCard, gameBoard, false); //generate action array before battle phase
-    let result = this.initiateCardBattles(gameBoard, actionArray);
-    
-    if (result == BattleResult.NO_BATTLE) {
-      //If no battle occured then simply update the state, steal and defenseless cards, and update the game state
-      this.captureDefenselessCards(this.attackingCard, actionArray, gameBoard);
-      this.attackingCard = null; //if a battle card was saved during this turn remove it
-      this.setAndEmitState(GameState.PLAYER_TURN);
-    } else {
-      //If a battle has occured we need to wrap any state updates inside of a timer. This is 
-      //to ensure that there's enough time to animate the battle happening.
-      setTimeout(() => {
-        if (this.attackingCard && this.defendingCard) {
-          if (result != BattleResult.LOST_BATTLE) {
-            //The opponent won the battle so convert the losing card and apply any chain effects.
-            this.defendingCard.cardDisplay = this.attackingCard.cardDisplay;
-            let chainedCards = this.generateActionArray(this.defendingCard, gameBoard, true);
-            this.captureDefenselessCards(this.defendingCard, chainedCards, gameBoard);
-
-            if (result == BattleResult.NEED_PLAYER_INPUT) {
-              //The battle that was won was only the first of multiple, recursively call this method
-              //to handle the rest of the battles then return without doing anything (updating game
-              //state will happen within lower recursion level)
-              return this.opponentBattlePhase(playedCard, gameBoard);
-            }
-          } else {
-            //The opponent lost the battle so flip it to the other side
-            this.attackingCard.cardDisplay = this.defendingCard.cardDisplay;
-          }
-        } else {
-          console.warn('Attack or defense card was\'t set');
-        }
-        
-        //The opponent's turn is over so change the state to the player's turn
-        this.attackingCard = null;
-        this.defendingCard = null; //if a battle card was saved during this turn remove it
-        this.setAndEmitState(GameState.PLAYER_TURN);
-      }, CARD_TIMER_LENGTH  + CARD_TIMER_INITIAL_DISPLAY + 5);
-    } 
   }
 
   chooseOpponentAttackingCard(attackingCard: CardInfo, actionArray: (string | null)[], board: CardInfo[]): (CardInfo | null) {
@@ -248,17 +213,9 @@ export class Gameplay {
       this.defendingCard = board[this.attackingCard.id + cardinalDirectionNeighbor(defendingCardDirection)];
 
       if (this.handleCardBattle(this.attackingCard, this.defendingCard) == this.attackingCard.id) {
-        //The attacking card has won, initiate a chain to steal any enemy cards that are touching
-        //arrows of the defending card
-        // defendingCard.cardDisplay = battleCard.cardDisplay;
-        // let chainedCards = this.generateActionArray(defendingCard, board, true);
-        // this.captureDefenselessCards(defendingCard, chainedCards, board);
         battleWon = true;
-
-        //Don't return from method as non-chained cards pointed at by played card need to be captured as well
       } else {
         //The attacking card has lost, convert it to the other team and return from this method
-        this.attackingCard.cardDisplay = this.defendingCard.cardDisplay;
         return BattleResult.LOST_BATTLE;
       }
 
@@ -295,17 +252,9 @@ export class Gameplay {
     return battleWon ? BattleResult.WON_BATTLE : BattleResult.NO_BATTLE;
   }
 
-  postCardBattle() {
-    //After a battle happens the losing card will need to be converted to the other team,
-    //and potentially chains will need to be applied
-    //TODO: Move logic for this out of battle initiaion method into this method
-  }
-
   generateActionArray(battleCard: CardInfo, board: CardInfo[], chain: boolean) {
-    let actionArray: (string | null)[] = [null, null, null, null, null, null, null, null]; //TODO: Consider using enum here
+    let actionArray: (string | null)[] = [null, null, null, null, null, null, null, null];
 
-    //TODO: Instead of iterating over all directions, iterate over directions based on location
-    //of current card (i.e. a card in top left corner will not check anything above or to the left)
     Object.keys(CardinalDirection).filter(key => !isNaN(Number(key))).forEach((key) => {
       const direction = Number(key);
       const hasNeighbor = this.checkForNeighboringCard(battleCard, direction, board,
@@ -318,11 +267,11 @@ export class Gameplay {
         //action array to 'battle', otherwise set it to 'capture'
         const opposingArrowDirection = getOppositeCardinalDirection(direction);
         if (chain) {
-          actionArray[cardinalDirectionToIndex(direction)] = 'chain'; //TODO: Consider using enum here
+          actionArray[cardinalDirectionToIndex(direction)] = 'chain';
         } else if (neighboringCard.cardStats.activeArrows & opposingArrowDirection) {
-          actionArray[cardinalDirectionToIndex(direction)] = 'battle'; //TODO: Consider using enum here
+          actionArray[cardinalDirectionToIndex(direction)] = 'battle';
         } else {
-          actionArray[cardinalDirectionToIndex(direction)] = 'capture'; //TODO: Consider using enum here
+          actionArray[cardinalDirectionToIndex(direction)] = 'capture';
         }
       }
     });
@@ -332,7 +281,6 @@ export class Gameplay {
 
   checkForNeighboringCard(currentCard: CardInfo, direction: number, board: CardInfo[], opponentDisplay: CardDisplay): boolean {
     //Before checking for neighbor, first see if the currentCard has an arrow pointing in the given direction
-
     if (!(currentCard.cardStats.activeArrows & (1 << cardinalDirectionToIndex(direction)))) {
       return false;
     }
@@ -395,13 +343,8 @@ export class Gameplay {
     //After calculating all numbers, create 'timers' for each card and display them 
     //to the player to see. Wrap this whole operation in a timer itself so that
     //gameplay doesn't resume until the battle timers are finished
-    // setTimeout(() => {
-      
-    // }, CARD_TIMER_LENGTH  + CARD_TIMER_INITIAL_DISPLAY + 100); //delay this update until after timer is complete
-
     this.setBattleAnimation(attackingCard, attackingCard.cardStats.attackPower, attackDiff);
     this.setBattleAnimation(defendingCard, defense, defenseDiff);
-
 
     return (attackDiff > defenseDiff) ? attackingCard.id : defendingCard.id;
   }

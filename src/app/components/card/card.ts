@@ -1,4 +1,4 @@
-import { AfterViewChecked, AfterViewInit, Component, effect, Input, OnChanges, OnInit, Signal, SimpleChange, SimpleChanges } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CardDisplay, CardStats } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 import { interval, Subscription } from 'rxjs';

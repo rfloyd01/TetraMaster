@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AttackStyle, CardDisplay, CardinalDirection, CardInfo, CardStats } from '../util/card-types';
 import { cardinalDirectionNeighbor, cardinalDirectionToIndex, getOppositeCardinalDirection, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../util/card-util';
+import { CARD_TIMER_INITIAL_DISPLAY, CARD_TIMER_LENGTH } from '../components/card/card';
 
 @Injectable({
   providedIn: 'root'
@@ -40,7 +41,7 @@ export class Gameplay {
     this.initiateCardBattles(playSpace, gameBoard);
   }
 
-  initiateCardBattles(battleCard: CardInfo, board: CardInfo[]): boolean {
+  initiateCardBattles(battleCard: CardInfo, board: CardInfo[], actionArray?:(string | null)[]): number {
     //When a card is placed on the board, if one of its arrows faces a card from the 
     //other player then a card battle will be initiated. If the opposing card doesn't
     //have a reciprical arrow pointing at the new card, then the opposing card will be 
@@ -51,7 +52,9 @@ export class Gameplay {
     //First create an array representing the 8 cardinal directions around the placed card.
     //If there are opposing cards in that spot relative to the new card then a reference will
     //be added to this array.
-    let actionArray = this.generateActionArray(battleCard, board, false);
+    if (!actionArray) {
+      actionArray = this.generateActionArray(battleCard, board, false);
+    }
 
     //If there is a single battle in the action array then carry it out, if there are multiple battles
     //the player gets to decide which battle to start first.
@@ -66,24 +69,30 @@ export class Gameplay {
         //arrows of the defending card
         defendingCard.cardDisplay = battleCard.cardDisplay;
         let chainedCards = this.generateActionArray(defendingCard, board, true);
-        console.log('chained card array: ' + chainedCards);
         this.captureDefenselessCards(defendingCard, chainedCards, board);
       } else {
         //The attacking card has lost, convert it to the other team and return from this method
         battleCard.cardDisplay = defendingCard.cardDisplay;
+        return 0;
       }
 
     } else if (battleCount >= 1) {
-      console.log('found multiple battles')
-      //TODO: add text letting user decide
-      return false;
+      //Put text into each of the potential battle cards that says "Choose a Card" to alert the
+      //player that they get to choose which card to battle. Return false from this method to indicate
+      //that we're still in the battle phase
+      for (let i:number = 0; i < 8; i++) {
+        if (actionArray[i] == 'battle') {
+          board[battleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText = 'Select a Card';
+        }
+      }
+      return -1;
     }
 
     //Once all battles are complete, any cards listed as 'capture' in the action array
     //should switch to the other team.
     this.captureDefenselessCards(battleCard, actionArray, board);
 
-    return true;
+    return 1;
   }
 
   generateActionArray(battleCard: CardInfo, board: CardInfo[], chain: boolean) {
@@ -177,6 +186,17 @@ export class Gameplay {
     const defenseRoll = randomInteger(defense);
     const defenseDiff = defense - defenseRoll;
 
+    //After calculating all numbers, create 'timers' for each card and display them 
+    //to the player to see. Wrap this whole operation in a timer itself so that
+    //gameplay doesn't resume until the battle timers are finished
+    // setTimeout(() => {
+      
+    // }, CARD_TIMER_LENGTH  + CARD_TIMER_INITIAL_DISPLAY + 100); //delay this update until after timer is complete
+
+    this.startTimer(attackingCard, attackingCard.cardStats.attackPower, attackDiff);
+    this.startTimer(defendingCard, defense, defenseDiff);
+
+
     return (attackDiff > defenseDiff) ? attackingCard.id : defendingCard.id;
   }
 
@@ -196,5 +216,17 @@ export class Gameplay {
         board[capturingCard.id + cardinalDirectionNeighbor(cardinalDirection)].cardDisplay = capturingCard.cardDisplay;
       }
     }
+  }
+
+  startTimer(card: CardInfo, upperBound: number, lowerBound: number) {
+    //This method both starts a timer for the given card, but also sets a second
+    //(much shorter) timer for resetting the card text within the game context.
+    //This might seem like an unneccesary step, however, in the slim change that
+    //another timer for the same card is set with the exact same upper and lower bound,
+    //Angular won't detect the change and no timer will actually get set.
+    card.cardText = 'Timer: ' + upperBound + ' ' + lowerBound;
+    setTimeout(() => {
+      card.cardText = ''; //Reset text in gameplay context, card component will handle updating timer text itself
+    }, CARD_TIMER_LENGTH  + CARD_TIMER_INITIAL_DISPLAY + 5); //delay this update until after timer is complete
   }
 }

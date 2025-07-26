@@ -19,6 +19,18 @@
     transition: background-color 0.3s ease;
 }
 
+.card-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: "Coiny", system-ui;
+    font-weight: 400;
+    font-size: 2.64vh;
+    font-style: normal;
+    color: whitesmoke;
+}
+
 .card-back {
     width: 100%;
     height: 100%;

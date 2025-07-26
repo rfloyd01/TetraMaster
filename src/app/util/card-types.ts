@@ -39,4 +39,5 @@ export interface CardInfo {
     cardStats: CardStats;
     isSelected: boolean;
     cardDisplay: CardDisplay;
+    cardText: string;
 }

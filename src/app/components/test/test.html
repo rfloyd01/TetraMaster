@@ -1,5 +1,16 @@
-<div style="display: flex">
-    <div class="triangle nw"></div>
-    <div class="triangle n"></div>
-    <div class="triangle ne"></div>
-</div>
+<app-card
+    [id]="34"
+    [cardDisplay]="cardDisplay.FRIEND"
+    [cardStats]="cardStats"
+    [isSelected]="false"
+    [cardText]="testTextOne"
+    (click)="setTimerOne()">
+</app-card>
+<app-card
+    [id]="35"
+    [cardDisplay]="cardDisplay.ENEMY"
+    [cardStats]="cardStats"
+    [isSelected]="false"
+    [cardText]="testTextTwo"
+    (click)="setTimerTwo()">
+</app-card>

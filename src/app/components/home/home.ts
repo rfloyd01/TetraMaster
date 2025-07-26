@@ -3,7 +3,7 @@ import { Card } from '../card/card';
 import { AttackStyle, CardDisplay, CardInfo } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 import { Gameplay } from '../../services/gameplay';
-import { randomInteger, removeCardFromHandById } from '../../util/card-util';
+import { cardinalDirectionNeighbor, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../../util/card-util';
 
 @Component({
   selector: 'app-home',
@@ -24,6 +24,7 @@ export class Home implements OnInit {
   //State Variables
   gamePhase!: number;
   selectedCard!: CardInfo | null;
+  currentBattleCard!: CardInfo | null;
   playerGoesFirst!: number;
   playerCanMove!: boolean;
 
@@ -50,6 +51,7 @@ export class Home implements OnInit {
 
     this.gamePhase = 0;
     this.selectedCard = null;
+    this.currentBattleCard = null;
     this.playerGoesFirst = 0;
     this.playerCanMove = false;
   }
@@ -78,7 +80,9 @@ export class Home implements OnInit {
         id: i,
         cardStats: this.createDefaultStats(),
         isSelected: false,
-        cardDisplay: (assignedBlockers & (1 << i)) ? CardDisplay.BLOCKED : CardDisplay.EMPTY});
+        cardDisplay: (assignedBlockers & (1 << i)) ? CardDisplay.BLOCKED : CardDisplay.EMPTY,
+        cardText: ''
+      });
     }
   }
 
@@ -89,8 +93,8 @@ export class Home implements OnInit {
     this.playerCards = []; //clear out any existing cards
 
     for (let i:number = 0; i < 5; i++) {
-      this.opponentCards.push({id: i + 100, cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.BACK });
-      this.playerCards.push({id: i + 105, cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.FRIEND });
+      this.opponentCards.push({id: i + 100, cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.BACK, cardText: '' });
+      this.playerCards.push({id: i + 105, cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.FRIEND, cardText: '' });
     }
   }
 
@@ -159,12 +163,63 @@ export class Home implements OnInit {
       removeCardFromHandById(this.selectedCard.id, this.playerCards);
       this.selectedCard = null;
 
+      //If a multi-battle scenario pops up, lock player out from selecting another card mid-turn
+      this.playerCanMove = false;
+
       //Initiate the battle phase against any neighboring oppenent cards
-      this.gameplayService.initiateCardBattles(this.gridCards[gridIndex], this.gridCards);
-      
-      //Advance the game
-      this.advanceGame();
+      if (this.gameplayService.initiateCardBattles(this.gridCards[gridIndex], this.gridCards) == -1) {
+        //If this method returns a -1 it means that we need user input for selecting an 
+        //opponent card to attack
+        this.currentBattleCard = this.gridCards[gridIndex];
+        return; //return without advancing the game
+      }
+
+    } else if (this.currentBattleCard && this.gridCards[gridIndex].cardText == 'Select a Card') {
+      //When the player selects a card to battle, the initiateCardBattles method is called with a 
+      //non-null action array which will have a single battle element. This will force a battle to 
+      //take place with the selected card.
+      let fauxActionArray: (string | null)[] = [];
+      let addBattleString;
+      console.log('Current battle card: ' + JSON.stringify(this.currentBattleCard));
+      for (let i = 0; i < 8; i++) {
+        addBattleString = false;
+        if (this.gameplayService.checkForNeighboringCard(this.currentBattleCard, ORDERED_CARDINAL_DIRECTIONS[i], this.gridCards, this.gridCards[gridIndex].cardDisplay)) {
+          if ((gridIndex - this.currentBattleCard.id) == cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])) {
+            addBattleString = true;
+          }
+
+          //Remove any text displayed on each of the neighboring cards
+          console.log('Removing text from following card: ' + JSON.stringify(this.gridCards[this.currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])]));
+          if (this.gridCards[this.currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText != '') {
+            this.gridCards[this.currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText = '';
+          }
+        }
+
+        if (addBattleString) {
+          fauxActionArray.push('battle');
+        } else {
+          fauxActionArray.push(null);
+        }
+      }
+
+      console.log(fauxActionArray);
+
+      //Initiate the selected battle, regardless of outcome of this battle the current battle card is set
+      //back to a null value
+      const battleResult = this.gameplayService.initiateCardBattles(this.currentBattleCard, this.gridCards, fauxActionArray);
+      const battleCardId= this.currentBattleCard.id; //save id before setting null for potential recursive call of this method
+      this.currentBattleCard = null;
+
+      if (battleResult == 1) {
+        //The battle was won by the attacking card so the turn goes on. Depending on how any chain reactions
+        //went there may or may not be more battles/chaining that need to happen. Instead of calling the battle
+        //method directly, recursively call the playSelectedCard method so new action array can be calculated.
+        this.playSelectedCard(Math.floor(battleCardId / 4), battleCardId % 4);
+      }
     }
+
+    //When above logic is complete, advance the game
+    this.advanceGame();
   }
 
   advanceGame() {

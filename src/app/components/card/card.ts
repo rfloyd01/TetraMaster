@@ -1,6 +1,10 @@
 import { AfterViewChecked, AfterViewInit, Component, effect, Input, OnChanges, OnInit, Signal, SimpleChange, SimpleChanges } from '@angular/core';
 import { CardDisplay, CardStats } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
+import { interval, Subscription } from 'rxjs';
+
+export const CARD_TIMER_INITIAL_DISPLAY: number = 300; //Time in ms to show first number before starting countdown
+export const CARD_TIMER_LENGTH: number = 1500; //Time in ms for timer to expire
 
 @Component({
   selector: 'app-card',
@@ -24,6 +28,13 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
 
   @Input()
   isSelected: boolean = false;
+
+  @Input()
+  cardText: string = '';
+
+  //Timing Variables
+  timerObservable!: Subscription | null;
+  
 
   displayAttackPower: string = '0';
   displayPhysicalDefense: string = '0';
@@ -52,6 +63,21 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
         } else {
           this.removeCSSClasses(cardHTMLElement, ['selected']);
         }
+      }
+    } else if (changes['cardText'] && changes['cardText'].currentValue) {
+      //The card text was updated. It will either be text prompting the
+      //user to select a card, or, it will be a timer. In the case that
+      //we receive a timer, the text in the card will reflect a number 
+      //ticking down
+      if (this.cardText.includes('Timer')) {
+        //Check to see that there isn't already a timer in place, if not, then
+        //start a new one. This check prevents accidentally restarting the timer
+        if (!this.timerObservable) {
+          this.createTimerSubscription();
+        } else {
+          console.log('couldn\'t start timer');
+        }
+        
       }
     }
 
@@ -149,5 +175,37 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
         htmlElement.classList.remove(cssClass);
       }
     }
+  }
+
+  createTimerSubscription() {
+    //When a card battle occurs, a number should pop up on the card
+    //which indicates its attack or defense. This number should then
+    //slowly or quickly tick down towards 0.
+
+    //The timer text sent as input to the card is composed of two 
+    //numbers. The first number represents the start value and the 
+    //second number represents the end value. The end value is calculated
+    //based on logic carried out in the gameplay class.
+
+    //It should always take the same amount of time to tick down from the 
+    //start number to the end number, so the larger the difference is,
+    //the faster the tick value will be.
+    let times = this.cardText.split('Timer: ')[1].split(/\s+/).map(Number);
+    this.cardText = String(times[0]);
+    const calculatedInterval = Math.round(CARD_TIMER_LENGTH / (times[0] - times[1]));
+
+    //Just to give the user some time to register the fist number,
+    //wait for a tiny bit before starting to tick it down
+    setTimeout(() => {
+      this.timerObservable = interval(calculatedInterval).subscribe(() => {
+        this.cardText = String(times[0]--);
+        if (times[0] <= times[1]) {
+          this.cardText = '';
+          this.timerObservable?.unsubscribe();
+          this.timerObservable = null;
+        }
+      });
+    }, CARD_TIMER_INITIAL_DISPLAY);
+    
   }
 }

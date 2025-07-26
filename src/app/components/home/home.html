@@ -12,6 +12,7 @@
             <app-card *ngFor="let j of counter(4)" [id]="4 * i + j"
             [cardDisplay]="gridCards[4 * i + j].cardDisplay"
             [cardStats]="gridCards[4 * i + j].cardStats"
+            [cardText]="gridCards[4 * i + j].cardText"
             (click)="playSelectedCard(i, j)"></app-card>
         </div>
     </div>

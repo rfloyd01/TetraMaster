@@ -19,6 +19,18 @@
     transition: background-color 0.3s ease;
 }
 
+.card-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: "Coiny", system-ui;
+    font-weight: 400;
+    font-size: 2.64vh;
+    font-style: normal;
+    color: whitesmoke;
+}
+
 .card-back {
     width: 100%;
     height: 100%;
@@ -83,6 +95,10 @@
     z-index: 0;
 }
 
+.selected .border {
+    background-color: green
+}
+
 .border.n {
     height: 1vh;
     width: 100%;
@@ -113,7 +129,7 @@
     height: 0;
     border-left: 1vh solid transparent;
     border-right: 1vh solid transparent;
-    z-index: 1;
+    z-index: 2;
 }
 
 .arrow.n {
@@ -134,38 +150,6 @@
 .arrow.n.active {
     border-bottom-color: goldenrod;
 } 
-
-.arrow.top-left-casing {
-  width: 0;
-  height: 0;
-  border-top-width: 1.414vh; /*sets height*/
-  border-top-style: solid;
-  border-top-color: grey;
-  border-right-width: 1.414vh; /*sets width*/
-  border-right-style: solid;
-  border-right-color: transparent;
-  border-left-width: 1.414vh; /*sets width*/
-  border-left-style: solid;
-  border-left-color: transparent;
-  top: 0px;
-  left: 9.166vh;
-}
-
-.arrow.top-right-casing {
-  width: 0;
-  height: 0;
-  border-top-width: 1.414vh; /*sets height*/
-  border-top-style: solid;
-  border-top-color: grey;
-  border-right-width: 1.414vh; /*sets width*/
-  border-right-style: solid;
-  border-right-color: transparent;
-  border-left-width: 1.414vh; /*sets width*/
-  border-left-style: solid;
-  border-left-color: transparent;
-  top: 0px;
-  right: 9.166vh;
-}
 
 .arrow.ne {
   width: 0;
@@ -204,38 +188,6 @@
     border-left-color: goldenrod;
 }
 
-.arrow.right-top-casing {
-  width: 0;
-  height: 0;
-  border-top-width: 1.414vh; /*sets height*/
-  border-top-style: solid;
-  border-top-color: transparent;
-  border-bottom-width: 1.414vh; /*sets width*/
-  border-bottom-style: solid;
-  border-bottom-color: transparent;
-  border-right-width: 1.414vh; /*sets width*/
-  border-right-style: solid;
-  border-right-color: gray;
-  right: 0px;
-  bottom: 11.414vh;
-}
-
-.arrow.right-bottom-casing {
-  width: 0;
-  height: 0;
-  border-top-width: 1.414vh; /*sets height*/
-  border-top-style: solid;
-  border-top-color: transparent;
-  border-bottom-width: 1.414vh; /*sets width*/
-  border-bottom-style: solid;
-  border-bottom-color: transparent;
-  border-right-width: 1.414vh; /*sets width*/
-  border-right-style: solid;
-  border-right-color: gray;
-  right: 0px;
-  bottom: 8.586vh;
-}
-
 .arrow.se {
   width: 0;
   height: 0;
@@ -251,7 +203,11 @@
 
 .arrow.se.active {
     border-right-color: goldenrod;
-} 
+}
+
+.s {
+    bottom: 0px;
+}
 
 .arrow.s {
   width: 0;
@@ -265,44 +221,11 @@
   border-left-width: 1.414vh; /*sets width*/
   border-left-style: solid;
   border-left-color: transparent;
-  bottom: 0px;
 }
 
 .arrow.s.active {
     border-top-color: goldenrod;
 } 
-
-.arrow.bottom-left-casing {
-  width: 0;
-  height: 0;
-  border-bottom-width: 1.414vh; /*sets height*/
-  border-bottom-style: solid;
-  border-bottom-color: grey;
-  border-right-width: 1.414vh; /*sets width*/
-  border-right-style: solid;
-  border-right-color: transparent;
-  border-left-width: 1.414vh; /*sets width*/
-  border-left-style: solid;
-  border-left-color: transparent;
-  bottom: 0px;
-  left: 9.166vh;
-}
-
-.arrow.bottom-right-casing {
-  width: 0;
-  height: 0;
-  border-bottom-width: 1.414vh; /*sets height*/
-  border-bottom-style: solid;
-  border-bottom-color: grey;
-  border-right-width: 1.414vh; /*sets width*/
-  border-right-style: solid;
-  border-right-color: transparent;
-  border-left-width: 1.414vh; /*sets width*/
-  border-left-style: solid;
-  border-left-color: transparent;
-  bottom: 0px;
-  right: 9.166vh;
-}
 
 .arrow.sw {
   width: 0;
@@ -341,38 +264,6 @@
     border-right-color: goldenrod;
 }
 
-.arrow.left-top-casing {
-  width: 0;
-  height: 0;
-  border-top-width: 1.414vh; /*sets height*/
-  border-top-style: solid;
-  border-top-color: transparent;
-  border-bottom-width: 1.414vh; /*sets width*/
-  border-bottom-style: solid;
-  border-bottom-color: transparent;
-  border-left-width: 1.414vh; /*sets width*/
-  border-left-style: solid;
-  border-left-color: gray;
-  left: 0px;
-  bottom: 11.414vh;
-}
-
-.arrow.left-bottom-casing {
-  width: 0;
-  height: 0;
-  border-top-width: 1.414vh; /*sets height*/
-  border-top-style: solid;
-  border-top-color: transparent;
-  border-bottom-width: 1.414vh; /*sets width*/
-  border-bottom-style: solid;
-  border-bottom-color: transparent;
-  border-left-width: 1.414vh; /*sets width*/
-  border-left-style: solid;
-  border-left-color: gray;
-  left: 0px;
-  bottom: 8.586vh;
-}
-
 .arrow.nw {
   width: 0;
   height: 0;
@@ -389,3 +280,99 @@
 .arrow.nw.active {
     border-left-color: goldenrod;
 } 
+
+.casing {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-color: transparent;
+    border-style: solid;
+    border-width: 1.414vh;
+    z-index: 1;
+}
+
+.casing.top-right {
+  border-top-color: grey;
+  border-bottom-style: hidden;
+  top: 0px;
+  left: 9.166vh;
+}
+
+.selected .casing.top-right {
+    border-top-color: green;
+}
+
+.casing.top-left {
+  border-top-color: grey;
+  border-bottom-style: hidden;
+  top: 0px;
+  right: 9.166vh;
+}
+
+.selected .casing.top-left {
+    border-top-color: green;
+}
+
+.casing.right-top{
+  border-right-color: gray;
+  border-left-style: hidden;
+  right: 0px;
+  bottom: 11.414vh;
+}
+
+.selected .casing.right-top {
+    border-right-color: green;
+}
+
+.casing.right-bottom {
+  border-right-color: gray;
+  border-left-style: hidden;
+  right: 0px;
+  bottom: 8.586vh;
+}
+
+.selected .casing.right-bottom {
+    border-right-color: green;
+}
+
+.casing.s.left {
+  border-bottom-color: grey;
+  border-top-style: hidden;
+  left: 9.166vh;
+}
+
+.selected .casing.s.left {
+    border-bottom-color: green;
+}
+
+.casing.s.right {
+  border-bottom-color: grey;
+  border-top-style: hidden;
+  right: 9.166vh;
+}
+
+.selected .casing.s.right {
+    border-bottom-color: green;
+}
+
+.casing.left-top {
+  border-left-color: gray;
+  border-right-style: hidden;
+  left: 0px;
+  bottom: 11.414vh;
+}
+
+.selected .casing.left-top {
+    border-left-color: green;
+}
+
+.casing.left-bottom {
+  border-left-color: gray;
+  border-right-style: hidden;
+  left: 0px;
+  bottom: 8.586vh;
+}
+
+.selected .casing.left-bottom {
+    border-left-color: green;
+}

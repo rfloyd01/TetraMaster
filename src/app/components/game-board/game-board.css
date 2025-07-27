@@ -1,0 +1,88 @@
+.game-button {
+    position: absolute;
+}
+
+.coin-image {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 15vh;
+    height: 15vh;
+    overflow: hidden;
+}
+
+.coin-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-board {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    height: 100%;
+    padding-top: 4vh;
+}
+
+.card-grid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 92vh;
+    width: 80vh;
+}
+
+.grid-row {
+    display:flex;
+}
+
+.grid-row app-card {
+    margin: 0.5vh;
+}
+
+.enemy-card-holder {
+    position: relative;
+    height: 80vh;
+    width: 18.333vh;
+    margin-top: 0.5vh;
+}
+
+.player-card-holder {
+    transform: scale(0.827);
+    transform-origin: top left;
+    margin-top: 0.5vh;
+    width: 18.333vh;
+}
+
+.enemy-card-holder .slot-0 {
+    position: absolute;
+    top: 0px;
+    z-index: 0;
+}
+
+.enemy-card-holder .slot-1 {
+    position: absolute;
+    top: 5vh;
+    z-index: 1;
+}
+
+.enemy-card-holder .slot-2 {
+    position: absolute;
+    top: 10vh;
+    z-index: 2;
+}
+
+.enemy-card-holder .slot-3 {
+    position: absolute;
+    top: 15vh;
+    z-index: 3;
+}
+
+.enemy-card-holder .slot-4 {
+    position: absolute;
+    top: 20vh;
+    z-index: 4;
+}

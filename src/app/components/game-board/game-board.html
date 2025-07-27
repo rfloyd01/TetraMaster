@@ -1,4 +1,5 @@
-<button class="game-button" *ngIf="displayButtons" (click)="startNewGame()">Play Again</button>
+<button class="new-game-button" *ngIf="displayButtons" (click)="startNewGame()">Play Again</button>
+<button class="quit-button" *ngIf="displayButtons" (click)="quit()">Quit</button>
 <div class="card-board">
     <div class="enemy-card-holder">
         <app-card *ngFor="let card of opponentCards; let i = index"

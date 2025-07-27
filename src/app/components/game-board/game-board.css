@@ -1,5 +1,30 @@
-.game-button {
+button {
     position: absolute;
+    height: 12vh;
+    width: 20vh;
+    background-color: burlywood;
+    font-family: "Coiny", system-ui;
+    font-weight: 200;
+    font-size: 3vh;
+    font-style: normal;
+    color: whitesmoke;
+    z-index: 3;
+}
+
+button:hover {
+    background-color: brown;
+}
+
+.new-game-button {
+    left: 50%;
+    top: 35%;
+    transform: translate(-50%, -50%);
+}
+
+.quit-button {
+    left: 50%;
+    top: 65%;
+    transform: translate(-50%, -50%);
 }
 
 .coin-image {

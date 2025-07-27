@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Card } from '../card/card';
 import { AttackStyle, CardDisplay, CardInfo } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
@@ -6,6 +6,7 @@ import { Gameplay } from '../../services/gameplay';
 import { cardinalDirectionNeighbor, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../../util/card-util';
 import { GameState } from '../../util/gameplay-types';
 import { interval, Subscription } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-game-board',
@@ -13,7 +14,7 @@ import { interval, Subscription } from 'rxjs';
   templateUrl: './game-board.html',
   styleUrl: './game-board.css'
 })
-export class GameBoard {
+export class GameBoard implements OnInit, OnDestroy {
   //Enum imports for data binding
   attackStyle = AttackStyle;
   cardDisplay = CardDisplay;
@@ -28,6 +29,7 @@ export class GameBoard {
   playerCanMove!: boolean;
   selectionType!: number;
   displayButtons!: boolean;
+  gameplaySubscription!: Subscription | null;
 
   //Coin FLipping Variables
   showCoin: boolean = false;
@@ -42,17 +44,33 @@ export class GameBoard {
   totalCoinFlipTime: number = 1500; //dureation of entire coin flip in ms
   coinFlipAnimationSpeed: number = 50; //time in ms between image changes for coin flip
 
-  constructor(private gameplayService: Gameplay) {
+  constructor(private router: Router, private gameplayService: Gameplay) {
   }
 
   ngOnInit(): void {
     //Subscribe to the gameplay update subscription
     //which is responsible for advancing the game state
-    this.gameplayService.gameplayUpdate.subscribe(
+    this.resetGameVariables();
+
+    if (this.gameplaySubscription) {
+      this.gameplaySubscription.unsubscribe();
+    }
+
+    this.gameplaySubscription = this.gameplayService.gameplayUpdate.subscribe(
       (value) => {
         this.advanceGame(value);
       }
     )
+
+    this.startNewGame();
+  }
+
+  ngOnDestroy(): void {
+    //Unsubscribe from the gameplayUpdate Behaviour Subject
+    this.gameplaySubscription?.unsubscribe();
+
+    //Reset the game state for the gameplay service
+    this.gameplayService.currentState = GameState.GAME_INIT;
   }
 
   startNewGame() {
@@ -62,6 +80,10 @@ export class GameBoard {
     this.createRandomBoard();
     this.createPlayerCards();
     this.gameplayService.startNewGame();
+  }
+
+  quit() {
+    this.router.navigate(['']);
   }
 
   resetGameVariables() {
@@ -216,7 +238,6 @@ export class GameBoard {
         }
 
         //Remove any text displayed on each of the neighboring cards
-        console.log('Removing text from following card: ' + JSON.stringify(this.gridCards[currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])]));
         if (this.gridCards[currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText != '') {
           this.gridCards[currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText = '';
         }
@@ -243,7 +264,7 @@ export class GameBoard {
       case GameState.GAME_INIT:
         {
           //This is the initial value that gets emitted when the gameplay service is initialized
-          this.startNewGame();
+          //For now do nothing here.
           break;
         }
       case GameState.GAME_START:
@@ -307,9 +328,8 @@ export class GameBoard {
     //First lock out the player from making any moves
     this.playerCanMove = false;
 
-    //Make the move for the opponent and advance the game state,
-    //but wrap this in a slight delay so it looks like the opponent
-    //is thinking for a bit
+    //Make the move for the opponent but wrap this in a slight delay
+    //so it looks like the opponent is thinking for a bit
     setTimeout(() => {
       this.gameplayService.opponentsTurn(this.opponentCards, this.gridCards);
     }, 1000);

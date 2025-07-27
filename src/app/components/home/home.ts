@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { Gameplay } from '../../services/gameplay';
 import { cardinalDirectionNeighbor, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../../util/card-util';
 import { GameState } from '../../util/gameplay-types';
+import { interval, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -27,6 +28,19 @@ export class Home implements OnInit {
   playerCanMove!: boolean;
   selectionType!: number;
   displayButtons!: boolean;
+
+  //Coin FLipping Variables
+  showCoin: boolean = false;
+  coinFlipSub!: Subscription | null;
+  coinImagePrefix: string = 'assets/coin_'
+  coinImageNumber: number = 0;
+  coinImageType: string = '.png';
+  currentTicks: number = 0;
+  flipTicks: number = 0;
+  totalTicks: number = 100;
+  activeCoinFlipTime: number = 1000; //dureation of coin flip in ms where coin is spinning
+  totalCoinFlipTime: number = 1500; //dureation of entire coin flip in ms
+  coinFlipAnimationSpeed: number = 50; //time in ms between image changes for coin flip
 
   constructor(private gameplayService: Gameplay) {
   }
@@ -236,9 +250,26 @@ export class Home implements OnInit {
         {
           //A new game has been started. Randomly select who will go first
           //and then advance the game
+          this.resetCoinVariables();
+          const winner = randomInteger(3, 1);
+          this.calculateTicksForCoinFlip(winner);
+          this.showCoin = true;
+
           setTimeout(() => {
-            this.gameplayService.coinFlip();
-          }, 10); //TODO: Animate coin flip here and increase timeout time
+            this.coinFlipSub = interval(this.coinFlipAnimationSpeed).subscribe(() => {
+              this.currentTicks++;
+              if (this.currentTicks <= this.flipTicks) {
+                this.coinImageNumber = (this.coinImageNumber + 1) % 12;
+                
+              } else if (this.currentTicks >= this.totalTicks) {
+                this.currentTicks = 0;
+                this.coinFlipSub?.unsubscribe();
+                this.coinFlipSub = null;
+                this.showCoin = false;
+                this.gameplayService.applyCoinFlip(winner);
+              }
+            });
+          });
           break;
         }
       case GameState.PLAYER_SELECT_BATTLE:
@@ -282,6 +313,31 @@ export class Home implements OnInit {
     setTimeout(() => {
       this.gameplayService.opponentsTurn(this.opponentCards, this.gridCards);
     }, 1000);
+  }
+
+  calculateTicksForCoinFlip(winner: number) {
+    //we want to make sure that the coin lands on the side of the winner
+    //(blue for the player and red for the opponent). A little math is used
+    //here to make sure that this occurs within the time frame of the flip.
+    this.totalTicks = Math.round(this.totalCoinFlipTime / this.coinFlipAnimationSpeed);
+    const baseTics = Math.round(this.activeCoinFlipTime / this.coinFlipAnimationSpeed);
+
+    if (winner == 1) {
+      //If the player should go first then we need the coin to stop on image 0
+      this.flipTicks = baseTics + (12 - baseTics % 12);
+    } else {
+      //If the opponent should go first then we need the coin to stop on image 6
+      this.flipTicks = baseTics + (6 - baseTics % 12);
+    }
+  }
+
+  resetCoinVariables() {
+    //Reset all variables pertaining to the coin flip to make sure it lands on the 
+    //correct side each time.
+    this.coinImageNumber = 0;
+    this.currentTicks = 0;
+    this.flipTicks = 0;
+    this.totalTicks = 0;
   }
 
   counter(count: number): number[] {

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Card, CARD_TIMER_INITIAL_DISPLAY, CARD_TIMER_LENGTH } from '../card/card';
 import { AttackStyle, CardDisplay, CardStats } from '../../util/card-types';
 import { randomInteger } from '../../util/card-util';
+import { interval, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-test',
@@ -15,6 +16,15 @@ export class Test implements OnInit {
   testTextOne: string = '';
   testTextTwo: string = '';
   cardStats!: CardStats;
+
+  coinFlipSub!: Subscription | null;
+  coinImageSource: string = 'assets/coin_1.png'
+  coinImagePrefix: string = 'assets/coin_'
+  coinImageNumber: number = 0;
+  coinImageType: string = '.png';
+
+  currentTicks: number = 0;
+  totalTicks: number = 100;
 
   ngOnInit(): void {
     this.cardStats = {
@@ -42,5 +52,18 @@ export class Test implements OnInit {
       this.testTextOne = ''; //Then reset the text, this won't have an effect on the current timer
       this.testTextTwo = ''; //Then reset the text, this won't have an effect on the current timer
     }, CARD_TIMER_LENGTH  + CARD_TIMER_INITIAL_DISPLAY + 5);
+  }
+
+  flipCoin() {
+    setTimeout(() => {
+          this.coinFlipSub = interval(50).subscribe(() => {
+            this.coinImageNumber = (this.coinImageNumber + 1) % 12;
+            if (this.currentTicks++ >= this.totalTicks) {
+              this.currentTicks = 0;
+              this.coinFlipSub?.unsubscribe();
+              this.coinFlipSub = null;
+            }
+          });
+        }, CARD_TIMER_INITIAL_DISPLAY);
   }
 }

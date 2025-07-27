@@ -14,3 +14,7 @@
     [cardText]="testTextTwo"
     (click)="setTimerTwo()">
 </app-card>
+<button (click)="flipCoin()" style="margin:25px;">Flip Coin</button>
+<div class="coin-image">
+    <img [src]="coinImagePrefix + coinImageNumber + coinImageType" [alt]="coinImagePrefix + coinImageNumber + coinImageType" />
+</div>

@@ -36,6 +36,13 @@ export class Gameplay {
     this.setAndEmitState(randomInteger(3, 1));
   }
 
+  applyCoinFlip(winner: GameState) {
+    //The logic for flipping the coin occurs in the game board component (as it needs to handle
+    //the flipping of the coin in the beginning). Once that is done, the winner is passed into 
+    //this method to start the game
+    this.setAndEmitState(winner);
+  }
+
   advanceToNextState() {
     if (this.cardsPlayed == 10) {
       this.cardsPlayed = 0;

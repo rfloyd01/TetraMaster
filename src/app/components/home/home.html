@@ -8,6 +8,9 @@
         [cardStats]="card.cardStats"></app-card>
     </div>
     <div class="card-grid">
+        <div *ngIf="showCoin"  class="coin-image">
+            <img [src]="coinImagePrefix + coinImageNumber + coinImageType" [alt]="coinImagePrefix + coinImageNumber + coinImageType" />
+        </div>
         <div *ngFor="let i of counter(4)" class="grid-row">
             <app-card *ngFor="let j of counter(4)" [id]="4 * i + j"
             [cardDisplay]="gridCards[4 * i + j].cardDisplay"

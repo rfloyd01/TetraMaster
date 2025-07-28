@@ -215,7 +215,7 @@ export class GameBoard implements OnInit, OnDestroy {
       this.playerCanMove = false;
 
       //After placing card on board and removing from hand, initiate game play sequence
-      this.gameplayService.battlePhase(this.gridCards[gridIndex], this.gridCards);
+      this.gameplayService.playerTurn(this.gridCards[gridIndex], this.gridCards);
     } 
   }
 
@@ -303,6 +303,7 @@ export class GameBoard implements OnInit, OnDestroy {
         }
       case GameState.GAME_END:
         {
+          console.log('game over');
           this.displayButtons = true;
           break;
         }

@@ -8,18 +8,18 @@
             <div>
                 <div class="selection-grid">
                     <!-- An interactive grid where the player selects cards to play with -->
-                    <div *ngFor="let i of counter(9)" class="selection-grid-row">
-                        <div *ngFor="let i of counter(9)" class="selection-grid-card">
-                            
+                    <div *ngFor="let i of counter(10)" class="selection-grid-row">
+                        <div *ngFor="let i of counter(10)" class="selection-grid-card">
+                            <img src="assets/empty_board_piece.png" alt="assets/favicon.png" />
                         </div>
-                        <div class="selection-grid-card right-edge"></div>
+                        <!-- <div class="selection-grid-card right-edge"></div> -->
                     </div>
-                    <div class="selection-grid-row">
+                    <!-- <div class="selection-grid-row">
                         <div *ngFor="let i of counter(9)" class="selection-grid-card bottom-edge">
                             
                         </div>
                         <div class="selection-grid-card bottom-edge right-edge"></div>
-                    </div>
+                    </div> -->
                 </div>
                 <div class="stock-type">
                     <!-- Holds info about total and distinct cards owned -->

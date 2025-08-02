@@ -1,4 +1,4 @@
-import { CardinalDirection, CardInfo } from "./card-types";
+import { AttackStyle, CardinalDirection, CardInfo } from "./card-types";
 
 export const ORDERED_CARDINAL_DIRECTIONS = [CardinalDirection.NW, CardinalDirection.N, CardinalDirection.NE, CardinalDirection.E,
     CardinalDirection.SE, CardinalDirection.S, CardinalDirection.SW, CardinalDirection.W];
@@ -80,4 +80,40 @@ export function getOppositeCardinalDirection(direction: CardinalDirection): Card
     //Since the opposite direction will always be four slots away from the current
     //direction, we figure out the opposite direction with left or right shifts
     return (direction >= CardinalDirection.SE) ? (direction >> 4) : (direction << 4); 
+}
+
+export function createDefaultStats() {
+    return createStats(0, 0, AttackStyle.PHYSICAL, 0, 0);
+}
+
+export function createRandomStats() {
+    //Generate the AttackStyle. There's an 90% chance for a standard attack type,
+    //9% chance for the Flexible style and a 1% chance for Assault style
+    let attackStyleNum = randomInteger(100)
+    let attackStyle: AttackStyle;
+
+    if (attackStyleNum < 90) {
+        if (attackStyleNum % 2 == 0) {
+        attackStyle = AttackStyle.PHYSICAL
+        } else {
+        attackStyle = AttackStyle.MAGICAL;
+        }
+    } else if (attackStyleNum < 99) {
+        attackStyle = AttackStyle.FLEXIBLE
+    } else {
+        attackStyle = AttackStyle.ASSUALT;
+    }
+
+    return createStats(randomInteger(256), randomInteger(256), attackStyle, randomInteger(256), randomInteger(256));
+}
+
+export function createStats(activeArrows: number, attackPower: number, attackStyle: AttackStyle,
+    physicalDefense:number, magicalDefense: number) {
+    return {
+        activeArrows: activeArrows,
+        attackPower: attackPower,
+        attackStyle: attackStyle,
+        physicalDefense: physicalDefense,
+        magicalDefense: magicalDefense
+    }
 }

@@ -3,10 +3,11 @@ import { Card } from '../card/card';
 import { AttackStyle, CardDisplay, CardInfo } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 import { Gameplay } from '../../services/gameplay';
-import { cardinalDirectionNeighbor, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../../util/card-util';
+import { cardinalDirectionNeighbor, createDefaultStats, createRandomStats, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../../util/card-util';
 import { GameState } from '../../util/gameplay-types';
 import { interval, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
+import { counter } from '../../util/general-utils';
 
 @Component({
   selector: 'app-game-board',
@@ -43,6 +44,9 @@ export class GameBoard implements OnInit, OnDestroy {
   activeCoinFlipTime: number = 1000; //dureation of coin flip in ms where coin is spinning
   totalCoinFlipTime: number = 1500; //dureation of entire coin flip in ms
   coinFlipAnimationSpeed: number = 50; //time in ms between image changes for coin flip
+
+  //Imported methods
+  counter = counter;
 
   constructor(private router: Router, private gameplayService: Gameplay) {
   }
@@ -119,7 +123,7 @@ export class GameBoard implements OnInit, OnDestroy {
     for (let i: number = 0; i < 16; i++) {
       this.gridCards.push({
         id: i,
-        cardStats: this.createDefaultStats(),
+        cardStats: createDefaultStats(),
         isSelected: false,
         cardDisplay: (assignedBlockers & (1 << i)) ? CardDisplay.BLOCKED : CardDisplay.EMPTY,
         cardText: ''
@@ -134,8 +138,8 @@ export class GameBoard implements OnInit, OnDestroy {
     this.playerCards = []; //clear out any existing cards
 
     for (let i:number = 0; i < 5; i++) {
-      this.opponentCards.push({id: i + 100, cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.BACK, cardText: '' });
-      this.playerCards.push({id: i + 105, cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.FRIEND, cardText: '' });
+      this.opponentCards.push({id: i + 100, cardStats: createRandomStats(), isSelected: false, cardDisplay: CardDisplay.BACK, cardText: '' });
+      this.playerCards.push({id: i + 105, cardStats: createRandomStats(), isSelected: false, cardDisplay: CardDisplay.FRIEND, cardText: '' });
     }
   }
 
@@ -154,42 +158,6 @@ export class GameBoard implements OnInit, OnDestroy {
       this.selectedCard = card.isSelected ? card : null;
     }
     
-  }
-
-  createDefaultStats() {
-    return this.createStats(0, 0, AttackStyle.PHYSICAL, 0, 0);
-  }
-
-  createRandomStats() {
-    //Generate the AttackStyle. There's an 90% chance for a standard attack type,
-    //9% chance for the Flexible style and a 1% chance for Assault style
-    let attackStyleNum = randomInteger(100)
-    let attackStyle: AttackStyle;
-
-    if (attackStyleNum < 90) {
-      if (attackStyleNum % 2 == 0) {
-        attackStyle = AttackStyle.PHYSICAL
-      } else {
-        attackStyle = AttackStyle.MAGICAL;
-      }
-    } else if (attackStyleNum < 99) {
-      attackStyle = AttackStyle.FLEXIBLE
-    } else {
-      attackStyle = AttackStyle.ASSUALT;
-    }
-
-    return this.createStats(randomInteger(256), randomInteger(256), attackStyle, randomInteger(256), randomInteger(256));
-  }
-
-  createStats(activeArrows: number, attackPower: number, attackStyle: AttackStyle,
-  physicalDefense:number, magicalDefense: number) {
-    return {
-      activeArrows: activeArrows,
-      attackPower: attackPower,
-      attackStyle: attackStyle,
-      physicalDefense: physicalDefense,
-      magicalDefense: magicalDefense
-    }
   }
 
   handleSelection(gridIndex: number, selectionType: number) {
@@ -361,7 +329,4 @@ export class GameBoard implements OnInit, OnDestroy {
     this.totalTicks = 0;
   }
 
-  counter(count: number): number[] {
-    return Array.from({ length: count }, (_, i) => i);
-  }
 }

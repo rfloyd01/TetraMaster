@@ -1,0 +1,150 @@
+.home-screen {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.main-screen {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.selected-cards {
+    padding-top: 0.5vh;
+    width: 18.333vh;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.827);
+    transform-origin: top right;
+    margin-right: 1vh;
+    height: 95vh;
+}
+
+.selected-cards app-card {
+    flex: 1;
+}
+
+.card-info {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.card-selection {
+    font-family: "Coiny", system-ui;
+    font-weight: 100;
+    font-size: 4vh;
+    font-style: normal;
+    color: rgb(241, 241, 186);
+    text-align: center;
+    /* padding-right: 25vh; */
+}
+
+.card-selection h2 {
+    transform: translate(9.167vh, 0vh);
+}
+
+.selection-grid {
+    /* height: 65vh;
+    width: 65vh;
+    border-style: solid;
+    border-color: black; */
+    /* margin-left: 5vh; */
+}
+
+.selection-grid-row {
+    display: flex;
+}
+
+.selection-grid-card {
+    height: 6vh;
+    width: 6vh;
+    border-style: solid;
+    border-color: black;
+    border-width: 0.5vh;
+    border-bottom-width: 0px;
+    border-right-width: 0px;
+}
+
+.selection-grid-card:hover {
+    background-color: aqua;
+}
+
+.right-edge {
+    border-right-width: 0.5vh;
+}
+
+.bottom-edge {
+    border-bottom-width: 0.5vh;
+}
+
+.col-3 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.win-lose-draw {
+    height: 12vh;
+    width: 24vh;
+    border-style: solid;
+    border-color: brown;
+    background-color: rgb(61, 15, 15);
+    display: flex;
+    flex-direction: column;
+    padding: 1vh;
+}
+
+.win-lose-draw p {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.green-text {
+    color: green;
+}
+
+.white-text {
+    color: white;
+}
+
+.win-lose-draw .green-text {
+    text-align: left;
+    /* margin-left: 1vh; */
+}
+
+.win-lose-draw .white-text {
+    text-align: right;
+    /* margin-right: 1vh */
+}
+
+/* <div class="home-screen">
+    <div class="main-screen">
+        <div class="card-selection">
+            <!-- Simply holds the words 'Card Selection'-->
+        </div>
+        <div class="card-info">
+            <div>
+                <div class="selection-grid">
+                    <!-- An interactive grid where the player selects cards to play with -->
+                </div>
+                <div class="stock-type">
+                    <!-- Holds info about total and distinct cards owned -->
+                </div>
+            </div>
+            <div>
+                <div class="win-lose-draw">
+                    <!-- Contains the count of wins, losses and draws for the player -->
+                </div>
+                <div class="highlighted-card">
+                    <!-- holds info about card that cursor is currently over -->
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <div class="selected-cards">
+        <!-- Holds the 5 cards selected by user -->
+    </div>
+</div> */

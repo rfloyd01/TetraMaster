@@ -1,2 +1,60 @@
-<div>Home Component Works!</div>
-<button class="game-button" (click)="startNewGame()">Start a Game</button>
+<!-- <button class="game-button" (click)="startNewGame()">Start a Game</button> -->
+<div class="home-screen">
+    <div class="main-screen">
+        <div class="card-selection">
+            <h2>Card Selection</h2>
+        </div>
+        <div class="card-info">
+            <div>
+                <div class="selection-grid">
+                    <!-- An interactive grid where the player selects cards to play with -->
+                    <div *ngFor="let i of counter(9)" class="selection-grid-row">
+                        <div *ngFor="let i of counter(9)" class="selection-grid-card">
+                            
+                        </div>
+                        <div class="selection-grid-card right-edge"></div>
+                    </div>
+                    <div class="selection-grid-row">
+                        <div *ngFor="let i of counter(9)" class="selection-grid-card bottom-edge">
+                            
+                        </div>
+                        <div class="selection-grid-card bottom-edge right-edge"></div>
+                    </div>
+                </div>
+                <div class="stock-type">
+                    <!-- Holds info about total and distinct cards owned -->
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="win-lose-draw">
+                    <!-- Contains the count of wins, losses and draws for the player -->
+                     <p class="green-text">Win:</p>
+                     <p class="white-text">0</p>
+                     <p class="green-text">Lose:</p>
+                     <p class="white-text">0</p>
+                     <p class="green-text">Draw:</p>
+                     <p class="white-text">0</p>
+                </div>
+                <div class="highlighted-card">
+                    <!-- holds info about card that cursor is currently over -->
+                     <h2 style="text-align: center;">No. 62</h2>
+                    <app-card [id]="highlightedCard.id"
+                     [cardDisplay]="highlightedCard.cardDisplay"
+                     [cardStats]="highlightedCard.cardStats"
+                     [isSelected]="highlightedCard.isSelected"></app-card>
+                     <h2 style="text-align: center;">Ramuh</h2>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <div class="selected-cards">
+
+        <!-- Holds the 5 cards selected by user -->
+        <app-card *ngFor="let card of selectedCards"
+         [id]="card.id"
+         [cardDisplay]="card.cardDisplay"
+         [cardStats]="card.cardStats"
+         [isSelected]="card.isSelected"></app-card>
+    </div>
+</div>

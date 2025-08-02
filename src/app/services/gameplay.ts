@@ -96,9 +96,11 @@ export class Gameplay {
               return; //state emission will happen at lower recursion level so simply return
             } 
           } else {
-            //The player lost the fight so the attacking card gets converted, no chaining happens
-            //in this case though.
+            //The attacking card lost the fight so it gets converted to the other team and
+            //chaining happens
             this.attackingCard.cardDisplay = this.defendingCard.cardDisplay;
+            let chainedCards = this.generateActionArray(this.attackingCard, gameBoard, true);
+            this.captureDefenselessCards(this.attackingCard, chainedCards, gameBoard);
           }
         } else {
           console.warn('Attack or defense card was\'t set');

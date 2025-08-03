@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CardDisplay, CardInfo } from '../../util/card-types';
+import { CARD_TYPES, CardDisplay, CardInfo } from '../../util/card-types';
 import { Card } from '../card/card';
-import { createDefaultStats, randomInteger } from '../../util/card-util';
+import { createDefaultStats, createRandomStatsForCardType, randomInteger } from '../../util/card-util';
 import { CommonModule } from '@angular/common';
 import { counter } from '../../util/general-utils';
 
@@ -65,7 +65,7 @@ export class Home implements OnInit {
       const col = randomInteger(10);
       this.allCards[row][col].push({
         id: i,
-        cardStats: createDefaultStats(),
+        cardStats: createRandomStatsForCardType(CARD_TYPES[10 * row + col]),
         isSelected: false,
         cardDisplay: CardDisplay.FRIEND,
         cardText: ''
@@ -85,8 +85,6 @@ export class Home implements OnInit {
     } else {
       return prefix + 'equipment_board_piece.png'
     }
-
-    // return 'assets/empty_board_piece.png'
   }
 
 }

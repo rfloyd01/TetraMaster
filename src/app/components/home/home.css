@@ -68,11 +68,11 @@
 .selection-grid-card .card-count {
     position: absolute;
     font-family: "Coiny", system-ui;
-    font-weight: 100;
+    font-weight: 50;
     font-size: 2vh;
     color: white;
     bottom: -0.5vh;
-    right: 0px;
+    right: 0.5vh;
     z-index: 2;
 }
 

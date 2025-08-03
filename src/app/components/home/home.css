@@ -81,6 +81,11 @@
     z-index: 1;
 }
 
+.selection-grid-card.selected {
+    outline: 2px solid greenyellow;
+    z-index: 2;
+}
+
 .right-edge {
     border-right-width: 0.5vh;
 }

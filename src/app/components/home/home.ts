@@ -15,8 +15,14 @@ import { counter } from '../../util/general-utils';
 export class Home implements OnInit {
 
   selectedCards: CardInfo[] = [];
+  selectedCardType!: number | null;
+  selectedCardTypeName!: string | null;
   highlightedCard!: CardInfo;
   allCards: (CardInfo | null)[][][] = [];
+
+  selectedCardsHTML!: (HTMLElement | null);
+
+  ALL_CARD_TYPES = CARD_TYPES;
 
   counter = counter;
 
@@ -65,7 +71,7 @@ export class Home implements OnInit {
       const col = randomInteger(10);
       this.allCards[row][col].push({
         id: i,
-        cardStats: createRandomStatsForCardType(CARD_TYPES[10 * row + col]),
+        cardStats: createRandomStatsForCardType(this.ALL_CARD_TYPES[10 * col + row]), //need to transpose row and column to match grid
         isSelected: false,
         cardDisplay: CardDisplay.FRIEND,
         cardText: ''
@@ -84,6 +90,28 @@ export class Home implements OnInit {
       return prefix + 'eidolon_board_piece.png'
     } else {
       return prefix + 'equipment_board_piece.png'
+    }
+  }
+
+  selectCardType(row: number, col: number) {
+    if (this.allCards[row][col].length > 0) {
+      this.selectedCardType = 10 * col + row; //need to transpose row and column to match grid
+      this.selectedCardTypeName = this.ALL_CARD_TYPES[this.selectedCardType].name;
+      if (this.allCards[row][col][0] != null) {
+        //Update stats for the card
+        this.highlightedCard.cardStats = this.allCards[row][col][0].cardStats;
+      }
+
+      //Apply the selected CSS class to the grid card in question, and remove it from
+      //any existing selected grid card
+      if (this.selectedCardsHTML) {
+        this.selectedCardsHTML.classList.remove('selected');
+      }
+
+      this.selectedCardsHTML = document.getElementById('grid-card-' + (10 * row + col)); //non-transposed id
+      if (this.selectedCardsHTML) {
+        this.selectedCardsHTML.classList.add('selected');
+      }
     }
   }
 

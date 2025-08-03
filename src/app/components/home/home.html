@@ -9,7 +9,7 @@
                 <div class="selection-grid">
                     <!-- An interactive grid where the player selects cards to play with -->
                     <div *ngFor="let i of counter(10)" class="selection-grid-row">
-                        <div *ngFor="let j of counter(10)" class="selection-grid-card">
+                        <div *ngFor="let j of counter(10)" [id]="'grid-card-' + (10 * i + j)" class="selection-grid-card" (click)="selectCardType(i, j)">
                             <img [src]="(allCards[i][j].length == 0) ? 'assets/empty_board_piece.png' : getBoardPieceImage(i, j)" alt="assets/empty_board_piece.png" />
                             <div class="card-count">{{(allCards[i][j].length > 1) ? allCards[i][j].length : ''}}</div>
                         </div>
@@ -22,28 +22,26 @@
             <div class="col-3">
                 <div class="win-lose-draw">
                     <!-- Contains the count of wins, losses and draws for the player -->
-                     <p class="green-text">Win:</p>
-                     <p class="white-text">0</p>
-                     <p class="green-text">Lose:</p>
-                     <p class="white-text">0</p>
-                     <p class="green-text">Draw:</p>
-                     <p class="white-text">0</p>
+                    <p class="green-text">Win:</p>
+                    <p class="white-text">0</p>
+                    <p class="green-text">Lose:</p>
+                    <p class="white-text">0</p>
+                    <p class="green-text">Draw:</p>
+                    <p class="white-text">0</p>
                 </div>
                 <div class="highlighted-card">
                     <!-- holds info about card that cursor is currently over -->
-                     <h2 style="text-align: center;">No. 62</h2>
-                    <app-card [id]="highlightedCard.id"
+                    <h2 style="text-align: center;">{{selectedCardType == null ? ' ' : 'No. ' + (selectedCardType + 1)}}</h2>
+                    <app-card [id]="5"
                      [cardDisplay]="highlightedCard.cardDisplay"
                      [cardStats]="highlightedCard.cardStats"
                      [isSelected]="highlightedCard.isSelected"></app-card>
-                     <h2 style="text-align: center;">Ramuh</h2>
+                    <h2 style="text-align: center;">{{selectedCardTypeName == null ? 'a' : selectedCardTypeName}}</h2>
                 </div>
             </div>
         </div>
-        
     </div>
     <div class="selected-cards">
-
         <!-- Holds the 5 cards selected by user -->
         <app-card *ngFor="let card of selectedCards"
          [id]="card.id"

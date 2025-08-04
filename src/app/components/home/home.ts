@@ -134,7 +134,23 @@ export class Home implements OnInit {
   removeSelectedCard(index: number) {
     //removes the selected card from the player's hand and puts
     //it back into the grid and highlighted cards (if necessary).
-    console.log(this.selectedCards[index].type);
+    const type = this.selectedCards[index].type;
+    const col = Math.floor(type / 10);
+    const row = type % 10;
+    this.allCards[row][col].push({
+        id: type,
+        cardStats: this.selectedCards[index].info.cardStats,
+        isSelected: false,
+        cardDisplay: CardDisplay.FRIEND,
+        cardText: ''
+      }
+    );
+
+    if ((this.highlightedCards.length) > 0 && (this.highlightedCards[0].id == type)) {
+      this.highlightedCards = this.allCards[row][col];
+    }
+
+    this.selectedCards.splice(index, 1);
   }
 
   getBoardPieceImage(row: number, col: number) {

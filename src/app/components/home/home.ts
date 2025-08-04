@@ -198,12 +198,20 @@ export class Home implements OnInit {
     const index = (10 * col + row);
     const prefix = 'assets/' + multi_string;
 
-    if (index < 60) {
+    if (index < 56) {
       return prefix + 'monster_board_piece.png'
-    } else if (index < 80) {
+    } else if (index < 70) {
       return prefix + 'eidolon_board_piece.png'
-    } else {
+    } else if (index < 80) {
       return prefix + 'equipment_board_piece.png'
+    } else if (index < 88) {
+      return prefix + 'vehicle_board_piece.png'
+    } else if (index < 93) {
+      return prefix + 'creature_board_piece.png'
+    } else if (index < 95) {
+      return prefix + 'castle_board_piece.png'
+    } else {
+      return prefix + 'question_mark_board_piece.png'
     }
   }
 

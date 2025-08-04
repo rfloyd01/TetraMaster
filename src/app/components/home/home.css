@@ -1,88 +1,221 @@
-.game-button {
-    position: absolute;
+.home-screen {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
 }
 
-.coin-image {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 15vh;
-    height: 15vh;
-    overflow: hidden;
+.main-screen {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
-.coin-image img {
+.selected-cards {
+    padding-top: 0.5vh;
+    width: 18.333vh;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.827);
+    transform-origin: top right;
+    margin-right: 1vh;
+    height: 95vh;
+}
+
+.selected-cards app-card {
+    flex: 1;
+}
+
+.card-info {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.card-selection {
+    font-family: "Coiny", system-ui;
+    font-weight: 100;
+    font-size: 4vh;
+    color: rgb(241, 241, 186);
+    text-align: center;
+}
+
+.card-selection h2 {
+    transform: translate(9.167vh, 0vh);
+}
+
+.selection-grid {
+    border-style: solid;
+    border-color: rgb(107, 56, 34);
+    border-width: 6px;
+}
+
+.selection-grid-row {
+    display: flex;
+}
+
+.selection-grid-card {
+    position: relative;
+    height: 6vh;
+    width: 6vh;
+    outline: none;
+}
+
+.selection-grid-card img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.card-board {
-    display: flex;
-    justify-content: space-around;
-    align-items: flex-start;
-    height: 100%;
-    padding-top: 4vh;
-}
-
-.card-grid {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    height: 92vh;
-    width: 80vh;
-}
-
-.grid-row {
-    display:flex;
-}
-
-.grid-row app-card {
-    margin: 0.5vh;
-}
-
-.enemy-card-holder {
-    position: relative;
-    height: 80vh;
-    width: 18.333vh;
-    margin-top: 0.5vh;
-}
-
-.player-card-holder {
-    transform: scale(0.827);
-    transform-origin: top left;
-    margin-top: 0.5vh;
-    width: 18.333vh;
-}
-
-.enemy-card-holder .slot-0 {
+.selection-grid-card .card-count {
     position: absolute;
-    top: 0px;
-    z-index: 0;
-}
-
-.enemy-card-holder .slot-1 {
-    position: absolute;
-    top: 5vh;
-    z-index: 1;
-}
-
-.enemy-card-holder .slot-2 {
-    position: absolute;
-    top: 10vh;
+    font-family: "Coiny", system-ui;
+    font-weight: 50;
+    font-size: 2vh;
+    color: white;
+    bottom: -0.5vh;
+    right: 0.5vh;
     z-index: 2;
 }
 
-.enemy-card-holder .slot-3 {
+.selection-grid-card:hover {
+    outline: 2px solid aqua;
+    z-index: 1;
+}
+
+.selection-grid-card.selected {
+    outline: 2px solid greenyellow;
+    z-index: 2;
+}
+
+.fixed-selected-card-type-holder {
+    height: 24vh;
+    width: 24vh;
+}
+
+.selected-card-type-holder {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.highlighted-card-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.left-arrow-button {
     position: absolute;
-    top: 15vh;
+    left: 0px;
+    bottom: -0.75vh;
+}
+
+.right-arrow-button {
+    position: absolute;
+    right: 0px;
+    bottom: -0.75vh;
+}
+
+.highlighted-card-0 {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 4;
+}
+
+.highlighted-card-1 {
+    position: absolute;
+    top: 0px;
+    left: 2.5vh;
     z-index: 3;
 }
 
-.enemy-card-holder .slot-4 {
+.highlighted-card-2 {
     position: absolute;
-    top: 20vh;
-    z-index: 4;
+    top: 0px;
+    left: 5vh;
+    z-index: 2;
+}
+
+.highlighted-card-3 {
+    position: absolute;
+    top: 0px;
+    left: 7.5vh;
+    z-index: 1;
+}
+
+.highlighted-card-4 {
+    position: absolute;
+    top: 0px;
+    left: 10vh;
+    z-index: 0;
+}
+
+.right-edge {
+    border-right-width: 0.5vh;
+}
+
+.bottom-edge {
+    border-bottom-width: 0.5vh;
+}
+
+.col-3 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.win-lose-draw {
+    height: 12vh;
+    width: 24vh;
+    border-style: solid;
+    border-color: rgb(107, 56, 34);
+    background-color: rgb(66, 45, 47);
+    display: flex;
+    flex-direction: column;
+    padding: 1vh;
+}
+
+.win-lose-draw p {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.green-text {
+    color: green;
+}
+
+.white-text {
+    color: white;
+}
+
+.win-lose-draw .green-text {
+    text-align: left;
+    /* margin-left: 1vh; */
+}
+
+.win-lose-draw .white-text {
+    text-align: right;
+    /* margin-right: 1vh */
+}
+
+.stock-type {
+    display: flex;
+    justify-content: space-between;
+}
+
+.stock-type p {
+    margin-top: 1vh;
+    font-size: 2.5vh;
+}
+
+.stock {
+    display: flex;
+    width: 40%;
+    justify-content: space-between;
+}
+
+.type {
+    display: flex;
+    width: 40%;
+    justify-content: space-between;
 }

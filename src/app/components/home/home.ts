@@ -1,11 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CARD_TYPES, CardDisplay, CardInfo } from '../../util/card-types';
 import { Card } from '../card/card';
-import { AttackStyle, CardDisplay, CardInfo } from '../../util/card-types';
+import { createRandomStatsForCardType, randomInteger } from '../../util/card-util';
 import { CommonModule } from '@angular/common';
-import { Gameplay } from '../../services/gameplay';
-import { cardinalDirectionNeighbor, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../../util/card-util';
-import { GameState } from '../../util/gameplay-types';
-import { interval, Subscription } from 'rxjs';
+import { counter } from '../../util/general-utils';
 
 @Component({
   selector: 'app-home',
@@ -14,334 +13,216 @@ import { interval, Subscription } from 'rxjs';
   styleUrl: './home.css'
 })
 export class Home implements OnInit {
-  //Enum imports for data binding
-  attackStyle = AttackStyle;
+
+  allCards: CardInfo[][][] = [];
+  selectedCards: {info: CardInfo, type: number}[] = []; //selected cards appear on right side of screen, these will be used in the game
+
+  totalCardCount: number = 0;
+  uniqueCardCount: number = 0;
+
+  //Fields for Highlighted cards. The highlighted cards appear in the middle of the screen when
+  //the player clicks on a grid square. If there are multiple of a single type of card owned then
+  //these cards can be shuffled through.
+  highlightedCards: CardInfo[] = []; //highlighted cards will appear in center of screen, show clards of currently highlighted grid square
+  highlightedCardType!: number | null;
+  highlightedCardTypeName!: string | null;
+  highlightedCardsHTML!: (HTMLElement | null);
+
+  //Imports
+  ALL_CARD_TYPES = CARD_TYPES;
   cardDisplay = CardDisplay;
+  counter = counter;
 
-  //Card Arrays
-  gridCards!: CardInfo[];
-  playerCards!: CardInfo[]; //TODO: Eventually these will be passed in as an input variable
-  opponentCards!: CardInfo[];
+  constructor(private router: Router, private route: ActivatedRoute) {
 
-  //State Variables
-  selectedCard!: CardInfo | null;
-  playerCanMove!: boolean;
-  selectionType!: number;
-  displayButtons!: boolean;
+  }
 
-  //Coin FLipping Variables
-  showCoin: boolean = false;
-  coinFlipSub!: Subscription | null;
-  coinImagePrefix: string = 'assets/coin_'
-  coinImageNumber: number = 0;
-  coinImageType: string = '.png';
-  currentTicks: number = 0;
-  flipTicks: number = 0;
-  totalTicks: number = 100;
-  activeCoinFlipTime: number = 1000; //dureation of coin flip in ms where coin is spinning
-  totalCoinFlipTime: number = 1500; //dureation of entire coin flip in ms
-  coinFlipAnimationSpeed: number = 50; //time in ms between image changes for coin flip
-
-  constructor(private gameplayService: Gameplay) {
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    this.shuffleHighlightedCards(event.key);
   }
 
   ngOnInit(): void {
-    //Subscribe to the gameplay update subscription
-    //which is responsible for advancing the game state
-    this.gameplayService.gameplayUpdate.subscribe(
-      (value) => {
-        this.advanceGame(value);
+    //Create the necessary arrays to hold player cards
+    for (let i:number = 0; i < 10; i++) {
+      this.allCards.push([]);
+      for (let j:number = 0; j < 10; j++) {
+        this.allCards[i].push([]);
       }
-    )
+    }
+
+    this.loadPlayerCards();
   }
 
   startNewGame() {
-    console.log('Starting a new game');
-    
-    this.resetGameVariables();
-    this.createRandomBoard();
-    this.createPlayerCards();
-    this.gameplayService.startNewGame();
+    this.router.navigate(['/game']);
   }
 
-  resetGameVariables() {
-    this.gridCards = [];
-    this.playerCards = [];
-    this.opponentCards = [];
+  loadPlayerCards() {
+    //TODO: Ultimately will persist cards in a data base and grab them via http,
+    //but for now just make random cards to see them displayed on the screen.
+    this.totalCardCount = 0;
+    this.uniqueCardCount = 0;
 
-    this.selectedCard = null;
-    this.playerCanMove = false;
-    this.selectionType = 0; //Selecting a grid space will either play a card, or choose an opponent card for battle
-    this.displayButtons = false;
-  }
+    //Randomly assign 100 cards into the grid
+    for (let i:number = 0; i < 100; i++) {
+      const row = randomInteger(10);
+      const col = randomInteger(10);
 
-  createRandomBoard() {
-    //First generate a random number between 0 and 6, this will represent how many slots
-    //in the board are blocked off.
-    const blockers = randomInteger(6);
-
-    //Randomly assign the blockers
-    let assignedBlockers:number = 0b0;
-    for (let i:number = 0; i < blockers; i++) {
-      while (true) {
-        const blockerLocation = randomInteger(16);
-        if (!(assignedBlockers & (1 << blockerLocation))) {
-          assignedBlockers |= (1 << blockerLocation);
-          break;
-        }
+      this.totalCardCount++;
+      if (this.allCards[row][col].length == 0) {
+        this.uniqueCardCount++;
       }
-    }
 
-    //Once blockers are assigned create cards and place them into the grid
-    //array. These cards will eventually have their stats overriden by player cards.
-    for (let i: number = 0; i < 16; i++) {
-      this.gridCards.push({
-        id: i,
-        cardStats: this.createDefaultStats(),
+      this.allCards[row][col].push({
+        id: 10 * col + row,
+        cardStats: createRandomStatsForCardType(this.ALL_CARD_TYPES[10 * col + row]), //need to transpose row and column to match grid
         isSelected: false,
-        cardDisplay: (assignedBlockers & (1 << i)) ? CardDisplay.BLOCKED : CardDisplay.EMPTY,
+        cardDisplay: CardDisplay.FRIEND,
         cardText: ''
-      });
+      })
     }
   }
 
-  createPlayerCards() {
-    //Generate 10 cards with randomized stats and give them to the player and opponent
-    //TODO: Eventually the player will be able to collect and choose which cards
-    //      they want to play with.
-    this.playerCards = []; //clear out any existing cards
+  highlightGridCard(row: number, col: number) {
+    if (this.allCards[row][col].length > 0) {
+      this.highlightedCardType = 10 * col + row; //need to transpose row and column to match grid
+      this.highlightedCardTypeName = this.ALL_CARD_TYPES[this.highlightedCardType].name;
 
-    for (let i:number = 0; i < 5; i++) {
-      this.opponentCards.push({id: i + 100, cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.BACK, cardText: '' });
-      this.playerCards.push({id: i + 105, cardStats: this.createRandomStats(), isSelected: false, cardDisplay: CardDisplay.FRIEND, cardText: '' });
+      if (this.allCards[row][col]) {
+        this.highlightedCards = this.allCards[row][col];
+      }
+
+      //Apply the selected CSS class to the grid card in question, and remove it from
+      //any existing selected grid card
+      if (this.highlightedCardsHTML) {
+        this.highlightedCardsHTML.classList.remove('selected');
+      }
+
+      this.highlightedCardsHTML = document.getElementById('grid-card-' + (10 * row + col)); //non-transposed id
+      if (this.highlightedCardsHTML) {
+        this.highlightedCardsHTML.classList.add('selected');
+      }
     }
   }
 
-  selectPlayerCard(card: CardInfo) {
-    //Don't let the player select a card if it isn't their turn
-    if (this.playerCanMove) {
-      //First iterate over all other cards in the player's hand and make sure they're deselected
-      for (let playerCard of this.playerCards) {
-        if (playerCard.id != card.id && playerCard.isSelected) {
-          playerCard.isSelected = false; //only set if current value is true
+  selectHighlightedCard(index: number) {
+    //When a player clicks on the top card in the highlighted cards array
+    //it will move the card into the selected cards portion of the screen.
+    if (this.selectedCards.length >= 5) {
+      return; //can't select more than 5 cards
+    }
+
+    if (index == 0) {
+      this.selectedCards.push({
+        info: {
+          id: this.selectedCards.length,
+          cardStats: this.highlightedCards[0].cardStats,
+          isSelected: false,
+          cardDisplay: CardDisplay.FRIEND,
+          cardText: ''
+        },
+        type: this.highlightedCards[0].id
+      })
+
+      //The selected card needs to be removed from the grid, and the highlighted
+      //cards array.
+      const col = this.highlightedCards[0].id % 10;
+      const row = Math.floor(this.highlightedCards[0].id / 10);
+      this.highlightedCards = this.highlightedCards.length > 1 ? this.highlightedCards.slice(1) : [];
+      this.allCards[col][row] = this.highlightedCards;
+
+      //If there are no more of the given card type then the text in the highlighted
+      //card section needs to be hidden (contains card number and name) and the image
+      //for the given card in the grid needs to change to the empty slot.
+      if (this.highlightedCards.length == 0) {
+        this.updateBoardPieceImage(row, col);
+        if (this.highlightedCardsHTML != null) {
+          this.highlightedCardsHTML.classList.remove('selected');
+          this.highlightedCardsHTML = null;
+          this.highlightedCardType = null;
+          this.highlightedCardTypeName = null;
         }
       }
-
-      //Then flip the selection status of the selected card (deselecting is an option)
-      card.isSelected = !card.isSelected;
-      this.selectedCard = card.isSelected ? card : null;
     }
-    
   }
 
-  createDefaultStats() {
-    return this.createStats(0, 0, AttackStyle.PHYSICAL, 0, 0);
-  }
+  shuffleHighlightedCards(key: string) {
+    //If there are multiple cards currently in the highlighted cards array
+    //then this method is used to move different cards to the front so that
+    //they can be selected.
+    if (this.highlightedCards.length > 1) {
+      let poppedCards: CardInfo[] = [];
+      if (key == 'ArrowLeft') {
+        //Move the card at the front of the highlighted cards array to the back
+        poppedCards = this.highlightedCards.splice(0, 1);
+      } else if (key == 'ArrowRight') {
+        //Move the card at the back of the highlighted cards array to the front
+        poppedCards = this.highlightedCards.splice(0, this.highlightedCards.length - 1);
+      } 
 
-  createRandomStats() {
-    //Generate the AttackStyle. There's an 90% chance for a standard attack type,
-    //9% chance for the Flexible style and a 1% chance for Assault style
-    let attackStyleNum = randomInteger(100)
-    let attackStyle: AttackStyle;
-
-    if (attackStyleNum < 90) {
-      if (attackStyleNum % 2 == 0) {
-        attackStyle = AttackStyle.PHYSICAL
-      } else {
-        attackStyle = AttackStyle.MAGICAL;
+      for (let card of poppedCards) {
+        this.highlightedCards.push(card);
       }
-    } else if (attackStyleNum < 99) {
-      attackStyle = AttackStyle.FLEXIBLE
+    }
+  }
+
+  removeSelectedCard(index: number) {
+    //removes the selected card from the player's hand and puts
+    //it back into the grid and highlighted cards (if necessary).
+    const type = this.selectedCards[index].type;
+    const col = Math.floor(type / 10);
+    const row = type % 10;
+    this.allCards[row][col].push({
+        id: type,
+        cardStats: this.selectedCards[index].info.cardStats,
+        isSelected: false,
+        cardDisplay: CardDisplay.FRIEND,
+        cardText: ''
+      }
+    );
+
+    if ((this.highlightedCards.length) > 0 && (this.highlightedCards[0].id == type)) {
+      this.highlightedCards = this.allCards[row][col];
+    }
+
+    this.selectedCards.splice(index, 1);
+  }
+
+  getBoardPieceImage(row: number, col: number) {
+    if (this.allCards[row][col].length == 0) {
+      return 'assets/empty_board_piece.png';
+    }
+
+    const multi_string = this.allCards[row][col].length > 1 ? 'multi_' : '';
+    const index = (10 * col + row);
+    const prefix = 'assets/' + multi_string;
+
+    if (index < 56) {
+      return prefix + 'monster_board_piece.png'
+    } else if (index < 70) {
+      return prefix + 'eidolon_board_piece.png'
+    } else if (index < 80) {
+      return prefix + 'equipment_board_piece.png'
+    } else if (index < 88) {
+      return prefix + 'vehicle_board_piece.png'
+    } else if (index < 93) {
+      return prefix + 'creature_board_piece.png'
+    } else if (index < 95) {
+      return prefix + 'castle_board_piece.png'
     } else {
-      attackStyle = AttackStyle.ASSUALT;
-    }
-
-    return this.createStats(randomInteger(256), randomInteger(256), attackStyle, randomInteger(256), randomInteger(256));
-  }
-
-  createStats(activeArrows: number, attackPower: number, attackStyle: AttackStyle,
-  physicalDefense:number, magicalDefense: number) {
-    return {
-      activeArrows: activeArrows,
-      attackPower: attackPower,
-      attackStyle: attackStyle,
-      physicalDefense: physicalDefense,
-      magicalDefense: magicalDefense
+      return prefix + 'question_mark_board_piece.png'
     }
   }
 
-  handleSelection(gridIndex: number, selectionType: number) {
-    if (selectionType == 0) {
-      this.playSelectedCard(gridIndex);
-    } else {
-      this.chooseOpponentCardToBattle(gridIndex);
-    }
-  }
-  
-  playSelectedCard(gridIndex: number) {
-    if (this.selectedCard && (this.gridCards[gridIndex]).cardDisplay == CardDisplay.EMPTY) {
-      //Add the stats of the selected card to the selected empty space in the grid.
-      this.gridCards[gridIndex].cardDisplay = CardDisplay.FRIEND;
-      this.gridCards[gridIndex].cardStats = this.selectedCard.cardStats;
-      this.gridCards[gridIndex].isSelected = false;
-
-      //Remove the card from the player's hand
-      removeCardFromHandById(this.selectedCard.id, this.playerCards);
-      this.selectedCard = null;
-
-      //If a multi-battle scenario pops up, lock player out from selecting another card mid-turn
-      this.playerCanMove = false;
-
-      //After placing card on board and removing from hand, initiate game play sequence
-      this.gameplayService.battlePhase(this.gridCards[gridIndex], this.gridCards);
-    } 
-  }
-
-  chooseOpponentCardToBattle(gridIndex: number) {
-    //When the player puts down a card, if multiple battles are possible then the player will need to select
-    //which of the opponents cards to battle. This method handles the logic for selecting the opponent card
-    //and removing text from the cards.
-    const currentBattleCard = this.gameplayService.attackingCard;
-    if (currentBattleCard == null) {
-      return
-    }
-
-    let fauxActionArray: (string | null)[] = [];
-    let addBattleString;
-    for (let i = 0; i < 8; i++) {
-      addBattleString = false;
-      if (this.gameplayService.checkForNeighboringCard(currentBattleCard, ORDERED_CARDINAL_DIRECTIONS[i], this.gridCards, this.gridCards[gridIndex].cardDisplay)) {
-        if ((gridIndex - currentBattleCard.id) == cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])) {
-          addBattleString = true;
-        }
-
-        //Remove any text displayed on each of the neighboring cards
-        console.log('Removing text from following card: ' + JSON.stringify(this.gridCards[currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])]));
-        if (this.gridCards[currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText != '') {
-          this.gridCards[currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText = '';
-        }
-      }
-
-      if (addBattleString) {
-        fauxActionArray.push('battle');
-      } else {
-        fauxActionArray.push(null);
+  updateBoardPieceImage(row: number, col: number) {
+    if (this.highlightedCardsHTML != null) {
+      let imgChild = this.highlightedCardsHTML.children.item(0);
+      if (imgChild != null) {
+        let imgHTML: HTMLImageElement = imgChild as HTMLImageElement;
+        imgHTML.src = this.getBoardPieceImage(row, col);
       }
     }
-
-    //Initiate the selected battle, regardless of outcome of this battle the current battle card is set
-    //back to a null value
-    this.gameplayService.battlePhase(currentBattleCard, this.gridCards, fauxActionArray);
-  }
-
-  advanceGame(state: GameState) {
-    //Most of the game flow happens through the gameplay service, however,
-    //there are some things that the board component will handle depending
-    //on the current game state, for example, letting the player choose
-    //which card to play.
-    switch (state) {
-      case GameState.GAME_INIT:
-        {
-          //This is the initial value that gets emitted when the gameplay service is initialized
-          this.startNewGame();
-          break;
-        }
-      case GameState.GAME_START:
-        {
-          //A new game has been started. Randomly select who will go first
-          //and then advance the game
-          this.resetCoinVariables();
-          const winner = randomInteger(3, 1);
-          this.calculateTicksForCoinFlip(winner);
-          this.showCoin = true;
-
-          setTimeout(() => {
-            this.coinFlipSub = interval(this.coinFlipAnimationSpeed).subscribe(() => {
-              this.currentTicks++;
-              if (this.currentTicks <= this.flipTicks) {
-                this.coinImageNumber = (this.coinImageNumber + 1) % 12;
-                
-              } else if (this.currentTicks >= this.totalTicks) {
-                this.currentTicks = 0;
-                this.coinFlipSub?.unsubscribe();
-                this.coinFlipSub = null;
-                this.showCoin = false;
-                this.gameplayService.applyCoinFlip(winner);
-              }
-            });
-          });
-          break;
-        }
-      case GameState.PLAYER_SELECT_BATTLE:
-        {
-          //If the player puts down a card and two or more opponent cards have matching
-          //arrows, the player will need to choose which of the opponent cards to 
-          //battle with.
-          this.selectionType = 1;
-          break;
-        }
-      case GameState.GAME_END:
-        {
-          this.displayButtons = true;
-          break;
-        }
-      case GameState.PLAYER_TURN:
-        {
-          this.startPlayerTurn();
-          break;
-        }
-      case GameState.OPPONENT_TURN:
-        {
-          this.opponentsTurn();
-          break;
-        }
-    }
-  }
-
-  startPlayerTurn() {
-    this.playerCanMove = true; //allows player to select card from inventory
-    this.selectionType = 0; //makes sure selected card will be placed onto the board
-  }
-
-  opponentsTurn() {
-    //First lock out the player from making any moves
-    this.playerCanMove = false;
-
-    //Make the move for the opponent and advance the game state,
-    //but wrap this in a slight delay so it looks like the opponent
-    //is thinking for a bit
-    setTimeout(() => {
-      this.gameplayService.opponentsTurn(this.opponentCards, this.gridCards);
-    }, 1000);
-  }
-
-  calculateTicksForCoinFlip(winner: number) {
-    //we want to make sure that the coin lands on the side of the winner
-    //(blue for the player and red for the opponent). A little math is used
-    //here to make sure that this occurs within the time frame of the flip.
-    this.totalTicks = Math.round(this.totalCoinFlipTime / this.coinFlipAnimationSpeed);
-    const baseTics = Math.round(this.activeCoinFlipTime / this.coinFlipAnimationSpeed);
-
-    if (winner == 1) {
-      //If the player should go first then we need the coin to stop on image 0
-      this.flipTicks = baseTics + (12 - baseTics % 12);
-    } else {
-      //If the opponent should go first then we need the coin to stop on image 6
-      this.flipTicks = baseTics + (6 - baseTics % 12);
-    }
-  }
-
-  resetCoinVariables() {
-    //Reset all variables pertaining to the coin flip to make sure it lands on the 
-    //correct side each time.
-    this.coinImageNumber = 0;
-    this.currentTicks = 0;
-    this.flipTicks = 0;
-    this.totalTicks = 0;
-  }
-
-  counter(count: number): number[] {
-    return Array.from({ length: count }, (_, i) => i);
   }
 
 }

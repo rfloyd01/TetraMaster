@@ -57,8 +57,6 @@ export class Gameplay {
   battlePhase(playedCard: CardInfo, gameBoard: CardInfo[], actionArray?:(string | null)[]) {
     //This method get's called after the player puts a card onto the board. It will handle
     //Battles, capturing of enemy cards, etc. before advancing the game to the next state.
-    this.cardsPlayed++;
-
     if (playedCard == null) {
       console.warn('Incorrect card selection');
       return;
@@ -98,9 +96,11 @@ export class Gameplay {
               return; //state emission will happen at lower recursion level so simply return
             } 
           } else {
-            //The player lost the fight so the attacking card gets converted, no chaining happens
-            //in this case though.
+            //The attacking card lost the fight so it gets converted to the other team and
+            //chaining happens
             this.attackingCard.cardDisplay = this.defendingCard.cardDisplay;
+            let chainedCards = this.generateActionArray(this.attackingCard, gameBoard, true);
+            this.captureDefenselessCards(this.attackingCard, chainedCards, gameBoard);
           }
         } else {
           console.warn('Attack or defense card was\'t set');
@@ -114,28 +114,32 @@ export class Gameplay {
     } 
   }
 
+  playerTurn(playedCard: CardInfo, gameBoard: CardInfo[]) {
+    //Since the player chooses their own card there isn't any extra logic to do.
+    //Simply increment the cards played counter and start the battle phase.
+    this.cardsPlayed++;
+    this.battlePhase(playedCard, gameBoard);
+  }
+
   opponentsTurn(opponentsCards: CardInfo[], gameBoard: CardInfo[]): void {
     //This method holds the logic for making the opponent's move. What the opponent does with 
     //their turn will be a factor of the cards that they have, the cards currently on the board,
     //and the selected skill level of the opponent.
-    if (opponentsCards.length > 0) {
 
-      //First, select the card to play and the grid space to play it in
-      let cardAndLocation = this.randomizeOpponentsTurn(opponentsCards, gameBoard);
-      if (this.opponentLevel >= 0) {
-        //TODO: Add more opponent levels
-      }
-
-      //Afterpicking the card remove it from the opponent's hand, add it to 
-      //the board, then initiate the card battle sequence
-      cardAndLocation.location.cardDisplay = CardDisplay.ENEMY;
-      cardAndLocation.location.cardStats = cardAndLocation.card.cardStats;
-      removeCardFromHandById(cardAndLocation.card.id, opponentsCards);
-
-      this.battlePhase(cardAndLocation.location, gameBoard);
-    } else {
-      this.gameplayUpdate.next(GameState.GAME_END);
+    //First, select the card to play and the grid space to play it in
+    let cardAndLocation = this.randomizeOpponentsTurn(opponentsCards, gameBoard);
+    if (this.opponentLevel >= 0) {
+      //TODO: Add more opponent levels
     }
+
+    //Afterpicking the card remove it from the opponent's hand, add it to 
+    //the board, then initiate the card battle sequence
+    cardAndLocation.location.cardDisplay = CardDisplay.ENEMY;
+    cardAndLocation.location.cardStats = cardAndLocation.card.cardStats;
+    removeCardFromHandById(cardAndLocation.card.id, opponentsCards);
+
+    this.cardsPlayed++;
+    this.battlePhase(cardAndLocation.location, gameBoard);
   }
 
   randomizeOpponentsTurn(oppentsCards: CardInfo[], gameBoard: CardInfo[]): {card: CardInfo, location: CardInfo} {

@@ -1,30 +1,72 @@
-<button class="game-button" *ngIf="displayButtons" (click)="startNewGame()">Play Again</button>
-<div class="card-board">
-    <div class="enemy-card-holder">
-        <app-card *ngFor="let card of opponentCards; let i = index"
-        [ngClass]="'slot-' + i"
-        [id]="card.id"
-        [cardDisplay]="card.cardDisplay"
-        [cardStats]="card.cardStats"></app-card>
-    </div>
-    <div class="card-grid">
-        <div *ngIf="showCoin"  class="coin-image">
-            <img [src]="coinImagePrefix + coinImageNumber + coinImageType" [alt]="coinImagePrefix + coinImageNumber + coinImageType" />
+<button *ngIf="selectedCards.length == 5" class="game-button" (click)="startNewGame()">Start a Game</button>
+<div class="home-screen">
+    <div class="main-screen">
+        <div class="card-selection">
+            <h2>Card Selection</h2>
         </div>
-        <div *ngFor="let i of counter(4)" class="grid-row">
-            <app-card *ngFor="let j of counter(4)" [id]="4 * i + j"
-            [cardDisplay]="gridCards[4 * i + j].cardDisplay"
-            [cardStats]="gridCards[4 * i + j].cardStats"
-            [cardText]="gridCards[4 * i + j].cardText"
-            (click)="handleSelection(4 * i + j, selectionType)"></app-card>
+        <div class="card-info">
+            <div>
+                <div class="selection-grid">
+                    <!-- An interactive grid where the player selects cards to play with -->
+                    <div *ngFor="let i of counter(10)" class="selection-grid-row">
+                        <div *ngFor="let j of counter(10)" [id]="'grid-card-' + (10 * i + j)" class="selection-grid-card" (click)="highlightGridCard(i, j)">
+                            <img [src]="getBoardPieceImage(i, j)" alt="assets/empty_board_piece.png" />
+                            <div class="card-count">{{(allCards[i][j].length > 1) ? allCards[i][j].length : ''}}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stock-type">
+                    <!-- Holds info about total and distinct cards owned -->
+                    <div class="stock">
+                        <p class="green-text">STOCK:</p>
+                        <p class="white-text">{{totalCardCount}}</p>
+                    </div>
+                    <div class="type">
+                        <p class="green-text">TYPE:</p>
+                        <p class="white-text">{{uniqueCardCount}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="win-lose-draw">
+                    <!-- Contains the count of wins, losses and draws for the player -->
+                    <p class="green-text">Win:</p>
+                    <p class="white-text">0</p>
+                    <p class="green-text">Lose:</p>
+                    <p class="white-text">0</p>
+                    <p class="green-text">Draw:</p>
+                    <p class="white-text">0</p>
+                </div>
+                <div class="highlighted-card-info">
+                    <!-- holds info about card that cursor is currently over -->
+                    <h2 style="text-align: center;">{{highlightedCardType == null ? ' ' : 'No. ' + (highlightedCardType + 1)}}</h2>
+                    <div class="fixed-selected-card-type-holder">
+                        <div class="selected-card-type-holder">
+                            <app-card *ngFor="let card of highlightedCards | slice:0:5; let i = index"
+                            (click)="selectHighlightedCard(i)"
+                            [class]="'highlighted-card-' + i"
+                            [id]="i + 5"
+                            [cardDisplay]="cardDisplay.FRIEND"
+                            [cardStats]="card.cardStats"
+                            [isSelected]="false"></app-card>
+                            <button class="left-arrow-button" *ngIf="highlightedCards.length > 1" (click)="shuffleHighlightedCards('ArrowLeft')">&lt;-</button>
+                            <button class="right-arrow-button" *ngIf="highlightedCards.length > 1" (click)="shuffleHighlightedCards('ArrowRight')">-&gt;</button>
+                        </div>
+                    </div>
+                    
+                    <h2 style="text-align: center;">{{highlightedCardTypeName == null ? ' ' : highlightedCardTypeName}}</h2>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="player-card-holder">
-        <app-card *ngFor="let card of playerCards"
-        [id]="card.id"
-        [cardDisplay]="card.cardDisplay"
-        [cardStats]="card.cardStats"
-        [isSelected]="card.isSelected"
-        (click)="selectPlayerCard(card)"></app-card>
+    <div class="selected-cards">
+        <!-- Holds the 5 cards selected by user -->
+        <app-card *ngFor="let card of selectedCards; let i = index"
+        (click)="removeSelectedCard(i)"
+        [id]="card.info.id"
+        [cardDisplay]="card.info.cardDisplay"
+        [cardStats]="card.info.cardStats"
+        [isSelected]="card.info.isSelected"
+        [cardType]="card.type"></app-card>
     </div>
 </div>

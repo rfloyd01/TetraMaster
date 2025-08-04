@@ -78,6 +78,11 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
         }
         
       }
+    } else if (changes['cardStats'] && changes['cardStats'].currentValue) {
+      //The stats for the card have changed, this happens when selecting cards
+      //from the home screen. When this happens we need to dynamically update
+      //arrow locations on the card.
+      this.makeActiveArrowsVisible();
     }
 
     this.setCardDisplay(); //Update display after changes have been applied
@@ -103,6 +108,8 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
     for (let i = 0; i < 8; i++) {
       if (shifter & this.cardStats.activeArrows) {
         cardHTMLElementChildren?.item(i)?.classList.add('active');
+      } else {
+        cardHTMLElementChildren?.item(i)?.classList.remove('active');
       }
 
       shifter <<= 1;

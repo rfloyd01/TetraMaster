@@ -1,4 +1,4 @@
-import { CardinalDirection, CardInfo } from "./card-types";
+import { AttackStyle, CardinalDirection, CardInfo, CardType } from "./card-types";
 
 export const ORDERED_CARDINAL_DIRECTIONS = [CardinalDirection.NW, CardinalDirection.N, CardinalDirection.NE, CardinalDirection.E,
     CardinalDirection.SE, CardinalDirection.S, CardinalDirection.SW, CardinalDirection.W];
@@ -80,4 +80,53 @@ export function getOppositeCardinalDirection(direction: CardinalDirection): Card
     //Since the opposite direction will always be four slots away from the current
     //direction, we figure out the opposite direction with left or right shifts
     return (direction >= CardinalDirection.SE) ? (direction >> 4) : (direction << 4); 
+}
+
+export function createDefaultStats() {
+    return createStats(0, 0, AttackStyle.PHYSICAL, 0, 0);
+}
+
+export function createRandomStats() {
+    //Generate the AttackStyle. There's an 90% chance for a standard attack type,
+    //9% chance for the Flexible style and a 1% chance for Assault style
+    let attackStyleNum = randomInteger(100)
+    let attackStyle: AttackStyle;
+
+    if (attackStyleNum < 90) {
+        if (attackStyleNum % 2 == 0) {
+        attackStyle = AttackStyle.PHYSICAL
+        } else {
+        attackStyle = AttackStyle.MAGICAL;
+        }
+    } else if (attackStyleNum < 99) {
+        attackStyle = AttackStyle.FLEXIBLE
+    } else {
+        attackStyle = AttackStyle.ASSUALT;
+    }
+
+    return createStats(randomInteger(256), randomInteger(256), attackStyle, randomInteger(256), randomInteger(256));
+}
+
+export function createRandomStatsForCardType(cardType: CardType) {
+    //Similar to the createRandomStats() method, however, the values generated will be within the 
+    //acceptable range for the specific card type. For example, a goblin card has a maximum
+    //attack of 7 while the Nova Dragon card has a max attack of 236. The actual value generated
+    //for each stat will be somewhere between the max value for the card type, and half the max value.
+    const arrows = randomInteger(256);
+    const attack = randomInteger(cardType.maxAtt + 1, Math.floor(cardType.maxAtt / 2));
+    const pDef = randomInteger(cardType.maxPDef + 1, Math.floor(cardType.maxPDef / 2));
+    const mDef = randomInteger(cardType.maxMDef + 1, Math.floor(cardType.maxMDef / 2));
+    
+    return createStats(arrows, attack, cardType.attackStyle, pDef, mDef);
+}
+
+export function createStats(activeArrows: number, attackPower: number, attackStyle: AttackStyle,
+    physicalDefense:number, magicalDefense: number) {
+    return {
+        activeArrows: activeArrows,
+        attackPower: attackPower,
+        attackStyle: attackStyle,
+        physicalDefense: physicalDefense,
+        magicalDefense: magicalDefense
+    }
 }

@@ -93,12 +93,25 @@
 
 .selected-card-type-holder {
     position: relative;
-    width: 100%
+    width: 100%;
+    height: 100%;
 }
 
 .highlighted-card-info {
     display: flex;
     flex-direction: column;
+}
+
+.left-arrow-button {
+    position: absolute;
+    left: 0px;
+    bottom: -0.75vh;
+}
+
+.right-arrow-button {
+    position: absolute;
+    right: 0px;
+    bottom: -0.75vh;
 }
 
 .highlighted-card-0 {
@@ -183,4 +196,26 @@
 .win-lose-draw .white-text {
     text-align: right;
     /* margin-right: 1vh */
+}
+
+.stock-type {
+    display: flex;
+    justify-content: space-between;
+}
+
+.stock-type p {
+    margin-top: 1vh;
+    font-size: 2.5vh;
+}
+
+.stock {
+    display: flex;
+    width: 40%;
+    justify-content: space-between;
+}
+
+.type {
+    display: flex;
+    width: 40%;
+    justify-content: space-between;
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CARD_TYPES, CardDisplay, CardInfo } from '../../util/card-types';
 import { Card } from '../card/card';
@@ -17,6 +17,9 @@ export class Home implements OnInit {
   allCards: CardInfo[][][] = [];
   selectedCards: {info: CardInfo, type: number}[] = []; //selected cards appear on right side of screen, these will be used in the game
 
+  totalCardCount: number = 0;
+  uniqueCardCount: number = 0;
+
   //Fields for Highlighted cards. The highlighted cards appear in the middle of the screen when
   //the player clicks on a grid square. If there are multiple of a single type of card owned then
   //these cards can be shuffled through.
@@ -32,6 +35,11 @@ export class Home implements OnInit {
 
   constructor(private router: Router, private route: ActivatedRoute) {
 
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    this.shuffleHighlightedCards(event.key);
   }
 
   ngOnInit(): void {
@@ -53,11 +61,19 @@ export class Home implements OnInit {
   loadPlayerCards() {
     //TODO: Ultimately will persist cards in a data base and grab them via http,
     //but for now just make random cards to see them displayed on the screen.
+    this.totalCardCount = 0;
+    this.uniqueCardCount = 0;
 
     //Randomly assign 100 cards into the grid
     for (let i:number = 0; i < 100; i++) {
       const row = randomInteger(10);
       const col = randomInteger(10);
+
+      this.totalCardCount++;
+      if (this.allCards[row][col].length == 0) {
+        this.uniqueCardCount++;
+      }
+
       this.allCards[row][col].push({
         id: 10 * col + row,
         cardStats: createRandomStatsForCardType(this.ALL_CARD_TYPES[10 * col + row]), //need to transpose row and column to match grid
@@ -127,6 +143,26 @@ export class Home implements OnInit {
           this.highlightedCardType = null;
           this.highlightedCardTypeName = null;
         }
+      }
+    }
+  }
+
+  shuffleHighlightedCards(key: string) {
+    //If there are multiple cards currently in the highlighted cards array
+    //then this method is used to move different cards to the front so that
+    //they can be selected.
+    if (this.highlightedCards.length > 1) {
+      let poppedCards: CardInfo[] = [];
+      if (key == 'ArrowLeft') {
+        //Move the card at the front of the highlighted cards array to the back
+        poppedCards = this.highlightedCards.splice(0, 1);
+      } else if (key == 'ArrowRight') {
+        //Move the card at the back of the highlighted cards array to the front
+        poppedCards = this.highlightedCards.splice(0, this.highlightedCards.length - 1);
+      } 
+
+      for (let card of poppedCards) {
+        this.highlightedCards.push(card);
       }
     }
   }

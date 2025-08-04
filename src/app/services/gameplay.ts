@@ -18,12 +18,24 @@ export class Gameplay {
   currentState: GameState = GameState.GAME_START;
   cardsPlayed: number = 0;
 
+  playerCards!: CardInfo[];
+
   attackingCard!: CardInfo | null;
   defendingCard!: CardInfo | null;
 
   private setAndEmitState(state: GameState) {
     this.currentState = state;
     this.gameplayUpdate.next(this.currentState);
+  }
+
+  setPlayerCards(cards: CardInfo[]) {
+    //When the player has selected their cards from the home screen and hit the 'New Game'
+    //button, their cards will be set in the service and then injected into the game
+    this.playerCards = cards;
+  }
+
+  getPlayerCards() {
+    return this.playerCards
   }
 
   startNewGame() {

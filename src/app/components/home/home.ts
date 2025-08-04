@@ -5,6 +5,7 @@ import { Card } from '../card/card';
 import { createRandomStatsForCardType, randomInteger } from '../../util/card-util';
 import { CommonModule } from '@angular/common';
 import { counter } from '../../util/general-utils';
+import { Gameplay } from '../../services/gameplay';
 
 @Component({
   selector: 'app-home',
@@ -33,7 +34,7 @@ export class Home implements OnInit {
   cardDisplay = CardDisplay;
   counter = counter;
 
-  constructor(private router: Router, private route: ActivatedRoute) {
+  constructor(private router: Router, private gameService: Gameplay) {
 
   }
 
@@ -55,6 +56,7 @@ export class Home implements OnInit {
   }
 
   startNewGame() {
+    this.gameService.setPlayerCards(this.selectedCards.map(e => e.info));
     this.router.navigate(['/game']);
   }
 

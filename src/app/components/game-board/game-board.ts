@@ -135,11 +135,11 @@ export class GameBoard implements OnInit, OnDestroy {
     //Generate 10 cards with randomized stats and give them to the player and opponent
     //TODO: Eventually the player will be able to collect and choose which cards
     //      they want to play with.
-    this.playerCards = []; //clear out any existing cards
+    this.playerCards = this.gameplayService.getPlayerCards();
 
     for (let i:number = 0; i < 5; i++) {
       this.opponentCards.push({id: i + 100, cardStats: createRandomStats(), isSelected: false, cardDisplay: CardDisplay.BACK, cardText: '' });
-      this.playerCards.push({id: i + 105, cardStats: createRandomStats(), isSelected: false, cardDisplay: CardDisplay.FRIEND, cardText: '' });
+      this.playerCards[i].id = i + 105;
     }
   }
 

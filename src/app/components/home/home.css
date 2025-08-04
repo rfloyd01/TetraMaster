@@ -1,3 +1,23 @@
+.game-button {
+    position: absolute;
+    height: 8vh;
+    width: 16vh;
+    background-color: burlywood;
+    font-family: "Coiny", system-ui;
+    font-weight: 200;
+    font-size: 2vh;
+    font-style: normal;
+    color: whitesmoke;
+    z-index: 3;
+    left: 20vh;
+    top: 10vh;
+    transform: translate(-50%, -50%);
+}
+
+.game-button:hover {
+    background-color: brown;
+}
+
 .home-screen {
     display: flex;
     flex-direction: row;
@@ -16,14 +36,12 @@
     display: flex;
     flex-direction: column;
     transform: scale(0.827);
-    transform-origin: top right;
+    transform-origin: top left;
     margin-right: 1vh;
     height: 95vh;
 }
 
-.selected-cards app-card {
-    flex: 1;
-}
+
 
 .card-info {
     display: flex;

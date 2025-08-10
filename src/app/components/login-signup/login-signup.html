@@ -1,0 +1,31 @@
+<div class="overlay">
+  <div class="auth-card">
+    <h2>{{ isLoginMode ? 'Login' : 'Create Account' }}</h2>
+
+    <form (ngSubmit)="submit()">
+      <input
+        type="text"
+        placeholder="Username"
+        [(ngModel)]="username"
+        name="username"
+        required
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        [(ngModel)]="password"
+        name="password"
+        required
+      />
+
+      <button type="submit">{{ isLoginMode ? 'Login' : 'Register' }}</button>
+    </form>
+
+    <p class="toggle-text">
+      {{ isLoginMode ? 'Need an account?' : 'Already have an account?' }}
+      <a href="#" (click)="toggleMode(); $event.preventDefault();">
+        {{ isLoginMode ? 'Sign up' : 'Login' }}
+      </a>
+    </p>
+  </div>
+</div>

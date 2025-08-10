@@ -22,7 +22,7 @@ export class GameBoard implements OnInit, OnDestroy {
 
   //Card Arrays
   gridCards!: CardInfo[];
-  playerCards!: CardInfo[]; //TODO: Eventually these will be passed in as an input variable
+  playerCards!: CardInfo[];
   opponentCards!: CardInfo[];
 
   //State Variables
@@ -48,7 +48,7 @@ export class GameBoard implements OnInit, OnDestroy {
   //Imported methods
   counter = counter;
 
-  constructor(private router: Router, private gameplayService: Gameplay) {
+  constructor(private readonly router: Router, private readonly gameplayService: Gameplay) {
   }
 
   ngOnInit(): void {
@@ -133,13 +133,11 @@ export class GameBoard implements OnInit, OnDestroy {
 
   createPlayerCards() {
     //Generate 10 cards with randomized stats and give them to the player and opponent
-    //TODO: Eventually the player will be able to collect and choose which cards
-    //      they want to play with.
     this.playerCards = this.gameplayService.getPlayerCards();
 
     for (let i:number = 0; i < 5; i++) {
       this.opponentCards.push({id: i + 100, cardStats: createRandomStats(), isSelected: false, cardDisplay: CardDisplay.BACK, cardText: '' });
-      this.playerCards[i].id = i + 105;
+      this.playerCards[i].id = i + 105; //update the id for the player cards so that css loads properly
     }
   }
 

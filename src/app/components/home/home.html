@@ -1,3 +1,4 @@
+<app-login-signup *ngIf="displayLoginModal" (loginResult)="handleLogin($event)"></app-login-signup>
 <button *ngIf="selectedCards.length == 5" class="game-button" (click)="startNewGame()">Start Game</button>
 <div class="home-screen">
     <div class="main-screen">

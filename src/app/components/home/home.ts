@@ -1,15 +1,17 @@
 import { Component, HostListener, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { CARD_TYPES, CardDisplay, CardInfo } from '../../util/card-types';
+import { Router } from '@angular/router';
+import { CARD_TYPES, CardDisplay, CardInfo, User } from '../../util/card-types';
 import { Card } from '../card/card';
 import { createRandomStatsForCardType, randomInteger } from '../../util/card-util';
 import { CommonModule } from '@angular/common';
 import { counter } from '../../util/general-utils';
 import { Gameplay } from '../../services/gameplay';
+import { TetraMasterHttpService } from '../../services/tetra-master-http-service';
+import { LoginSignup } from '../login-signup/login-signup';
 
 @Component({
   selector: 'app-home',
-  imports: [Card, CommonModule],
+  imports: [Card, CommonModule, LoginSignup],
   templateUrl: './home.html',
   styleUrl: './home.css'
 })
@@ -20,6 +22,8 @@ export class Home implements OnInit {
 
   totalCardCount: number = 0;
   uniqueCardCount: number = 0;
+
+  displayLoginModal: boolean = true;
 
   //Fields for Highlighted cards. The highlighted cards appear in the middle of the screen when
   //the player clicks on a grid square. If there are multiple of a single type of card owned then
@@ -34,8 +38,18 @@ export class Home implements OnInit {
   cardDisplay = CardDisplay;
   counter = counter;
 
-  constructor(private router: Router, private gameService: Gameplay) {
+  constructor(private readonly router: Router, private readonly gameService: Gameplay) {
 
+  }
+
+  handleLogin(user: User) {
+    if (user) {
+      console.log('Successfully logged in!');
+      this.allCards = user.cards;
+      this.displayLoginModal = false;
+    } else {
+      console.log("Login failed");
+    }
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -52,7 +66,7 @@ export class Home implements OnInit {
       }
     }
 
-    this.loadPlayerCards();
+    // this.loadPlayerCards();
   }
 
   startNewGame() {

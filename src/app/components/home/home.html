@@ -1,4 +1,6 @@
-<button *ngIf="selectedCards.length == 5" class="game-button" (click)="startNewGame()">Start a Game</button>
+<app-login-signup *ngIf="displayLoginModal"></app-login-signup>
+<button *ngIf="selectedCards.length == 5" class="button game-button" (click)="startNewGame()">Start Game</button>
+<button *ngIf="!displayLoginModal" class="button logout-button" (click)="logout()">Logout</button>
 <div class="home-screen">
     <div class="main-screen">
         <div class="card-selection">

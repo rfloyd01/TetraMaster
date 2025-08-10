@@ -55,6 +55,32 @@ export interface CardType {
     maxMDef: number;
 }
 
+//Interface for receiving user card info from back end
+export interface UserCardJson {
+    card_id?: number;
+    card_type: number;
+    arrows: number;
+    attack_power: number;
+    attack_style: string;
+    physical_defense: number;
+    magical_defense: number;
+}
+
+//Interface for receiving user info from back end
+export interface UserJson {
+    jwt?: string;
+    user_id: number;
+    username: string;
+    enc_password: string;
+    cards: UserCardJson[];
+}
+
+//Holds info about user that the front end can use
+export interface User {
+    username: string;
+    cards: CardInfo[][][];
+}
+
 //Array holding CardType info for every card in the game
 export const CARD_TYPES:CardType[] = [
     {id: 0, name: 'Goblin', attackStyle: AttackStyle.PHYSICAL, maxAtt: 7, maxPDef: 9, maxMDef: 4},

@@ -57,7 +57,7 @@ export interface CardType {
 
 //Interface for receiving user card info from back end
 export interface UserCardJson {
-    card_id: number;
+    card_id?: number;
     card_type: number;
     arrows: number;
     attack_power: number;

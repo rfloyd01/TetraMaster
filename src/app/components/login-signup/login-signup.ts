@@ -1,7 +1,5 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { TetraMasterHttpService } from '../../services/tetra-master-http-service';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AttackStyle, CardDisplay, CardInfo, User, UserJson } from '../../util/card-types';
 import { UserService } from '../../services/user-service';
 
 @Component({

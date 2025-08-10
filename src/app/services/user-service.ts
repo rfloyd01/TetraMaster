@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AttackStyle, CardDisplay, CardInfo, User, UserJson } from '../util/card-types';
 import { TetraMasterHttpService } from './tetra-master-http-service';
-import { BehaviorSubject, tap } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'

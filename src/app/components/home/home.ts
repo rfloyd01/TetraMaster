@@ -1,12 +1,11 @@
 import { Component, HostListener, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { CARD_TYPES, CardDisplay, CardInfo, User } from '../../util/card-types';
+import { CARD_TYPES, CardDisplay, CardInfo } from '../../util/card-types';
 import { Card } from '../card/card';
 import { createRandomStatsForCardType, randomInteger } from '../../util/card-util';
 import { CommonModule } from '@angular/common';
 import { counter } from '../../util/general-utils';
 import { Gameplay } from '../../services/gameplay';
-import { TetraMasterHttpService } from '../../services/tetra-master-http-service';
 import { LoginSignup } from '../login-signup/login-signup';
 import { UserService } from '../../services/user-service';
 import { Subscription } from 'rxjs';
@@ -103,9 +102,8 @@ export class Home implements OnInit {
     }
   }
 
-  loadPlayerCards() {
-    //TODO: Ultimately will persist cards in a data base and grab them via http,
-    //but for now just make random cards to see them displayed on the screen.
+  loadRandomPlayerCards() {
+    //This method can be used for testing.
     this.totalCardCount = 0;
     this.uniqueCardCount = 0;
 

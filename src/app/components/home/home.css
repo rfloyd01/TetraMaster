@@ -216,12 +216,10 @@ button:hover {
 
 .win-lose-draw .green-text {
     text-align: left;
-    /* margin-left: 1vh; */
 }
 
 .win-lose-draw .white-text {
     text-align: right;
-    /* margin-right: 1vh */
 }
 
 .stock-type {

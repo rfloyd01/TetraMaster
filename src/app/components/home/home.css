@@ -1,4 +1,4 @@
-.game-button {
+.button {
     position: absolute;
     height: 8vh;
     width: 16vh;
@@ -10,11 +10,19 @@
     color: whitesmoke;
     z-index: 3;
     left: 20vh;
-    top: 10vh;
+    
     transform: translate(-50%, -50%);
 }
 
-.game-button:hover {
+.logout-button {
+    bottom: 1vh;
+}
+
+.game-button {
+    top: 10vh;
+}
+
+button:hover {
     background-color: brown;
 }
 

@@ -68,6 +68,7 @@ export interface UserCardJson {
 
 //Interface for receiving user info from back end
 export interface UserJson {
+    jwt?: string;
     user_id: number;
     username: string;
     enc_password: string;

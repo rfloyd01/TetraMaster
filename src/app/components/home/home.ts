@@ -8,6 +8,8 @@ import { counter } from '../../util/general-utils';
 import { Gameplay } from '../../services/gameplay';
 import { TetraMasterHttpService } from '../../services/tetra-master-http-service';
 import { LoginSignup } from '../login-signup/login-signup';
+import { UserService } from '../../services/user-service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -23,7 +25,9 @@ export class Home implements OnInit {
   totalCardCount: number = 0;
   uniqueCardCount: number = 0;
 
-  displayLoginModal: boolean = true;
+  //Login variables
+  displayLoginModal: boolean = false;
+  loginSubscription!: Subscription | null;
 
   //Fields for Highlighted cards. The highlighted cards appear in the middle of the screen when
   //the player clicks on a grid square. If there are multiple of a single type of card owned then
@@ -38,18 +42,9 @@ export class Home implements OnInit {
   cardDisplay = CardDisplay;
   counter = counter;
 
-  constructor(private readonly router: Router, private readonly gameService: Gameplay) {
+  constructor(private readonly router: Router, private readonly gameService: Gameplay,
+    private readonly userService: UserService) {
 
-  }
-
-  handleLogin(user: User) {
-    if (user) {
-      console.log('Successfully logged in!');
-      this.allCards = user.cards;
-      this.displayLoginModal = false;
-    } else {
-      console.log("Login failed");
-    }
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -58,20 +53,54 @@ export class Home implements OnInit {
   }
 
   ngOnInit(): void {
-    //Create the necessary arrays to hold player cards
+    //Create default grid while user login logic is occuring
+    this.setDefaultGrid();
+
+    //Subscribe to the user service which alerts the home screen to user logins
+    if (this.loginSubscription) {
+      this.loginSubscription.unsubscribe();
+    }
+
+    this.loginSubscription = this.userService.loginResult.subscribe(
+      (res) => {
+        if (res == 1) {
+          const userCards = this.userService.getUserCards();
+          if (userCards) {
+            this.allCards = userCards;
+            this.displayLoginModal = false;
+          }
+          
+        } else if (res == 0) {
+          this.setDefaultGrid();
+          this.displayLoginModal = true;
+        }
+      }
+    )
+
+    //Attempt to load cards for the currently logged in user. If no user is
+    //currently logged in then nothing will happen here.
+    console.log('Attempting to load user cards');
+    this.userService.loadUserCards();
+  }
+
+  startNewGame() {
+    this.gameService.setPlayerCards(this.selectedCards.map(e => e.info));
+    this.router.navigate(['/game']);
+  }
+
+  logout() {
+    //logs out the current user
+    this.userService.logout();
+  }
+
+  setDefaultGrid() {
+    this.allCards = [];
     for (let i:number = 0; i < 10; i++) {
       this.allCards.push([]);
       for (let j:number = 0; j < 10; j++) {
         this.allCards[i].push([]);
       }
     }
-
-    // this.loadPlayerCards();
-  }
-
-  startNewGame() {
-    this.gameService.setPlayerCards(this.selectedCards.map(e => e.info));
-    this.router.navigate(['/game']);
   }
 
   loadPlayerCards() {
@@ -102,7 +131,7 @@ export class Home implements OnInit {
 
   highlightGridCard(row: number, col: number) {
     if (this.allCards[row][col].length > 0) {
-      this.highlightedCardType = 10 * col + row; //need to transpose row and column to match grid
+      this.highlightedCardType = 10 * col + row; //grid number starts in top left and goes down
       this.highlightedCardTypeName = this.ALL_CARD_TYPES[this.highlightedCardType].name;
 
       if (this.allCards[row][col]) {
@@ -115,7 +144,7 @@ export class Home implements OnInit {
         this.highlightedCardsHTML.classList.remove('selected');
       }
 
-      this.highlightedCardsHTML = document.getElementById('grid-card-' + (10 * row + col)); //non-transposed id
+      this.highlightedCardsHTML = document.getElementById('grid-card-' + (10 * row + col)); //transpose row and col to get correct html element
       if (this.highlightedCardsHTML) {
         this.highlightedCardsHTML.classList.add('selected');
       }
@@ -143,10 +172,14 @@ export class Home implements OnInit {
 
       //The selected card needs to be removed from the grid, and the highlighted
       //cards array.
-      const col = this.highlightedCards[0].id % 10;
-      const row = Math.floor(this.highlightedCards[0].id / 10);
+      const row = this.highlightedCards[0].id % 10;
+      const col = Math.floor(this.highlightedCards[0].id / 10);
+
+      console.log(this.highlightedCards[0].id);
+      console.log(row, col);
+      
       this.highlightedCards = this.highlightedCards.length > 1 ? this.highlightedCards.slice(1) : [];
-      this.allCards[col][row] = this.highlightedCards;
+      this.allCards[row][col] = this.highlightedCards;
 
       //If there are no more of the given card type then the text in the highlighted
       //card section needs to be hidden (contains card number and name) and the image

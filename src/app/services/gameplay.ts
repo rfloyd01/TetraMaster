@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
-import { AttackStyle, CardDisplay, CardinalDirection, CardInfo, CardStats } from '../util/card-types';
-import { cardinalDirectionNeighbor, cardinalDirectionToIndex, getOppositeCardinalDirection, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../util/card-util';
+import { AttackStyle, CardDisplay, CardInfo, CardStats } from '../util/card-types';
+import { cardinalDirectionNeighbor, cardinalDirectionToIndex, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../util/card-util';
 import { CARD_TIMER_INITIAL_DISPLAY, CARD_TIMER_LENGTH } from '../components/card/card';
 import { BehaviorSubject } from 'rxjs';
-import { BattleResult, GameState } from '../util/gameplay-types';
+import { BattleResult, GameState, Opponent } from '../util/gameplay-types';
+import { OpponentService } from './opponent-service';
+import { generateActionArray } from '../util/gameplay-utils';
 
 @Injectable({
   providedIn: 'root'
@@ -23,6 +25,8 @@ export class Gameplay {
   attackingCard!: CardInfo | null;
   defendingCard!: CardInfo | null;
 
+  constructor(private readonly opponentService:OpponentService) {}
+
   private setAndEmitState(state: GameState) {
     this.currentState = state;
     this.gameplayUpdate.next(this.currentState);
@@ -34,12 +38,21 @@ export class Gameplay {
     this.playerCards = cards;
   }
 
+  setNewOpponent(opponent: Opponent) {
+    this.opponentService.setOpponent(opponent);
+  }
+
   getPlayerCards() {
     return this.playerCards
   }
 
+  getOpponentCards() {
+    return this.opponentService.getOpponentCards();
+  }
+
   startNewGame() {
-    //Initialize variables with default values and then emit the Game Start state
+    //Initialize variables with default values, generate opponent cards and then emit the Game Start state
+    this.opponentService.generateOpponentCards();
     this.setAndEmitState(GameState.GAME_START);
   }
 
@@ -75,7 +88,7 @@ export class Gameplay {
     }
 
     this.attackingCard = playedCard;
-    actionArray ??= this.generateActionArray(playedCard, gameBoard, false); //generate action array before battle phase
+    actionArray ??= generateActionArray(playedCard.cardStats, playedCard.id, playedCard.cardDisplay, gameBoard, false); //generate action array before battle phase
     const result = this.initiateCardBattles(gameBoard, actionArray);
 
     if (result == BattleResult.NO_BATTLE) {
@@ -95,7 +108,7 @@ export class Gameplay {
           if (result != BattleResult.LOST_BATTLE) {
             //The player won the fight. Take over the enemy card as well as any chained cards.
             this.defendingCard.cardDisplay = this.attackingCard.cardDisplay;
-            let chainedCards = this.generateActionArray(this.defendingCard, gameBoard, true);
+            let chainedCards = generateActionArray(this.defendingCard.cardStats, this.defendingCard.id, this.defendingCard.cardDisplay, gameBoard, true);
             this.captureDefenselessCards(this.defendingCard, chainedCards, gameBoard);
             this.captureDefenselessCards(this.attackingCard, actionArray, gameBoard);
             
@@ -111,7 +124,7 @@ export class Gameplay {
             //The attacking card lost the fight so it gets converted to the other team and
             //chaining happens
             this.attackingCard.cardDisplay = this.defendingCard.cardDisplay;
-            let chainedCards = this.generateActionArray(this.attackingCard, gameBoard, true);
+            let chainedCards = generateActionArray(this.attackingCard.cardStats, this.attackingCard.id, this.attackingCard.cardDisplay, gameBoard, true);
             this.captureDefenselessCards(this.attackingCard, chainedCards, gameBoard);
           }
         } else {
@@ -133,22 +146,19 @@ export class Gameplay {
     this.battlePhase(playedCard, gameBoard);
   }
 
-  opponentsTurn(opponentsCards: CardInfo[], gameBoard: CardInfo[]): void {
+  opponentsTurn(gameBoard: CardInfo[]): void {
     //This method holds the logic for making the opponent's move. What the opponent does with 
     //their turn will be a factor of the cards that they have, the cards currently on the board,
     //and the selected skill level of the opponent.
 
     //First, select the card to play and the grid space to play it in
-    let cardAndLocation = this.randomizeOpponentsTurn(opponentsCards, gameBoard);
-    if (this.opponentLevel >= 0) {
-      //TODO: Add more opponent levels
-    }
+    let cardAndLocation = this.opponentService.makeMove(gameBoard);
 
     //Afterpicking the card remove it from the opponent's hand, add it to 
     //the board, then initiate the card battle sequence
     cardAndLocation.location.cardDisplay = CardDisplay.ENEMY;
     cardAndLocation.location.cardStats = cardAndLocation.card.cardStats;
-    removeCardFromHandById(cardAndLocation.card.id, opponentsCards);
+    removeCardFromHandById(cardAndLocation.card.id, this.opponentService.getOpponentCards());
 
     this.cardsPlayed++;
     this.battlePhase(cardAndLocation.location, gameBoard);
@@ -192,7 +202,7 @@ export class Gameplay {
         return defendingCards[randomInteger(defendingCards.length)];
       }
 
-      return defendingCards[0]
+      return defendingCards[0];
     }
     
     return null;
@@ -212,14 +222,6 @@ export class Gameplay {
     //caputred without a fight. If the opposing card does have a reciprical arrow though
     //a battle will take place between the two cards, with the victor capturing the other
     //card (and potentially chaining this into other cards).
-
-    //First create an array representing the 8 cardinal directions around the placed card.
-    //If there are opposing cards in that spot relative to the new card then a reference will
-    //be added to this array.
-    // actionArray ??= this.generateActionArray(battleCard, board, false); //TODO: make sure this commented out lines behaves the same as below block
-    // if (!actionArray) {
-    //   actionArray = this.generateActionArray(battleCard, board, false);
-    // }
 
     //If there is a single battle in the action array then carry it out, if there are multiple battles
     //the player gets to decide which battle to start first.
@@ -273,78 +275,6 @@ export class Gameplay {
     }
 
     return battleWon ? BattleResult.WON_BATTLE : BattleResult.NO_BATTLE;
-  }
-
-  generateActionArray(battleCard: CardInfo, board: CardInfo[], chain: boolean) {
-    let actionArray: (string | null)[] = [null, null, null, null, null, null, null, null];
-
-    Object.keys(CardinalDirection).filter(key => !isNaN(Number(key))).forEach((key) => {
-      const direction = Number(key);
-      const hasNeighbor = this.checkForNeighboringCard(battleCard, direction, board,
-        battleCard.cardDisplay == CardDisplay.FRIEND ? CardDisplay.ENEMY: CardDisplay.FRIEND);
-
-      if (hasNeighbor) {
-        let neighboringCard = board[battleCard.id + cardinalDirectionNeighbor(direction)];
-
-        //If the neighboring card has an opposing arrow then set the appropriate index of the 
-        //action array to 'battle', otherwise set it to 'capture'
-        const opposingArrowDirection = getOppositeCardinalDirection(direction);
-        if (chain) {
-          actionArray[cardinalDirectionToIndex(direction)] = 'chain';
-        } else if (neighboringCard.cardStats.activeArrows & opposingArrowDirection) {
-          actionArray[cardinalDirectionToIndex(direction)] = 'battle';
-        } else {
-          actionArray[cardinalDirectionToIndex(direction)] = 'capture';
-        }
-      }
-    });
-
-    return actionArray;
-  }
-
-  checkForNeighboringCard(currentCard: CardInfo, direction: number, board: CardInfo[], opponentDisplay: CardDisplay): boolean {
-    //Before checking for neighbor, first see if the currentCard has an arrow pointing in the given direction
-    if (!(currentCard.cardStats.activeArrows & (1 << cardinalDirectionToIndex(direction)))) {
-      return false;
-    }
-
-    let onUpperEdge: boolean = (currentCard.id < 4);
-    let onRightEdge: boolean = (currentCard.id % 4 == 3);
-    let onLowerEdge: boolean = (currentCard.id >= 12);
-    let onLeftEdge:  boolean = (currentCard.id % 4 == 0);
-    let neighborsOk: boolean = true;
-
-    switch (direction) {
-      case CardinalDirection.NW:
-        neighborsOk = (!onUpperEdge && !onLeftEdge);
-        break;
-      case CardinalDirection.N:
-        neighborsOk = !onUpperEdge;
-        break
-      case CardinalDirection.NE:
-        neighborsOk = (!onUpperEdge && !onRightEdge);
-        break;
-      case CardinalDirection.E:
-        neighborsOk = !onRightEdge;
-        break;
-      case CardinalDirection.SE:
-        neighborsOk = (!onRightEdge && !onLowerEdge);
-        break;
-      case CardinalDirection.S:
-        neighborsOk = !onLowerEdge;
-        break;
-      case CardinalDirection.SW:
-        neighborsOk = (!onLeftEdge && !onLowerEdge);
-        break;
-      case CardinalDirection.W:
-        neighborsOk = !onLeftEdge;
-        break;
-      default:
-        neighborsOk = false;
-        break;
-    }
-
-    return neighborsOk && (board[currentCard.id + cardinalDirectionNeighbor(direction)].cardDisplay == opponentDisplay);
   }
 
   handleCardBattle(attackingCard: CardInfo, defendingCard: CardInfo): number {

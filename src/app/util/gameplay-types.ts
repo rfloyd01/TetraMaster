@@ -14,3 +14,8 @@ export enum BattleResult {
     LOST_BATTLE,
     WON_BATTLE
 }
+
+export interface Opponent {
+    skillLevel: number;
+    cardLevel: number;
+}

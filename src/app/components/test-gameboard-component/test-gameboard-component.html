@@ -1,0 +1,32 @@
+<button class="new-game-button" *ngIf="displayButtons" (click)="startNewGame()">Play Again</button>
+<button class="quit-button" *ngIf="displayButtons" (click)="quit()">Quit</button>
+<div class="card-board">
+    <div class="enemy-card-holder">
+        <app-card *ngFor="let card of opponentCards"
+        [id]="card.id"
+        [cardDisplay]="card.cardDisplay"
+        [cardStats]="card.cardStats"
+        [isSelected]="card.isSelected"
+        (click)="selectCard(card)"></app-card>
+    </div>
+    <div class="card-grid">
+        <div *ngIf="showCoin"  class="coin-image">
+            <img [src]="coinImagePrefix + coinImageNumber + coinImageType" [alt]="coinImagePrefix + coinImageNumber + coinImageType" />
+        </div>
+        <div *ngFor="let i of counter(4)" class="grid-row">
+            <app-card *ngFor="let j of counter(4)" [id]="4 * i + j"
+            [cardDisplay]="gridCards[4 * i + j].cardDisplay"
+            [cardStats]="gridCards[4 * i + j].cardStats"
+            [cardText]="gridCards[4 * i + j].cardText"
+            (click)="handleSelection(4 * i + j, selectionType)"></app-card>
+        </div>
+    </div>
+    <div class="player-card-holder">
+        <app-card *ngFor="let card of playerCards"
+        [id]="card.id"
+        [cardDisplay]="card.cardDisplay"
+        [cardStats]="card.cardStats"
+        [isSelected]="card.isSelected"
+        (click)="selectCard(card)"></app-card>
+    </div>
+</div>

@@ -3,7 +3,7 @@ import { Card } from '../card/card';
 import { AttackStyle, CardDisplay, CardInfo } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 import { Gameplay } from '../../services/gameplay';
-import { cardinalDirectionNeighbor, createDefaultStats, createRandomStats, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../../util/card-util';
+import { cardinalDirectionNeighbor, createDefaultStats, createDefaultStatsWithRandomArrows, createRandomStats, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../../util/card-util';
 import { GameState } from '../../util/gameplay-types';
 import { interval, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
@@ -132,9 +132,9 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
 
   createPlayerCards() {
     //Generate 10 cards with randomized stats and give them to the player and opponent
-
     for (let i:number = 0; i < 5; i++) {
-      this.opponentCards.push({id: i + 100, cardStats: createRandomStats(), isSelected: false, cardDisplay: CardDisplay.ENEMY, cardText: ''});
+      this.opponentCards.push({id: i + 100, cardStats: createDefaultStatsWithRandomArrows(), isSelected: false, cardDisplay: CardDisplay.ENEMY, cardText: ''});
+      // this.opponentCards.push({id: i + 100, cardStats: createRandomStats(), isSelected: false, cardDisplay: CardDisplay.ENEMY, cardText: ''});
       this.playerCards.push({id: i + 105, cardStats: createRandomStats(), isSelected: false, cardDisplay: CardDisplay.FRIEND, cardText: ''});
     }
   }

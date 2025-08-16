@@ -84,6 +84,7 @@ export class Home implements OnInit {
 
   startNewGame() {
     this.gameService.setPlayerCards(this.selectedCards.map(e => e.info));
+    this.gameService.setNewOpponent({skillLevel: 1, cardLevel: 0}); //TODO: Player should be able to pick opponent, set manually for now
     this.router.navigate(['/game']);
   }
 
@@ -172,9 +173,6 @@ export class Home implements OnInit {
       //cards array.
       const row = this.highlightedCards[0].id % 10;
       const col = Math.floor(this.highlightedCards[0].id / 10);
-
-      console.log(this.highlightedCards[0].id);
-      console.log(row, col);
       
       this.highlightedCards = this.highlightedCards.length > 1 ? this.highlightedCards.slice(1) : [];
       this.allCards[row][col] = this.highlightedCards;

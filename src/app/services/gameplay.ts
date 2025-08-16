@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { AttackStyle, CardDisplay, CardinalDirection, CardInfo, CardStats } from '../util/card-types';
-import { cardinalDirectionNeighbor, cardinalDirectionToIndex, getOppositeCardinalDirection, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../util/card-util';
+import { AttackStyle, CardDisplay, CardInfo, CardStats } from '../util/card-types';
+import { cardinalDirectionNeighbor, cardinalDirectionToIndex, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../util/card-util';
 import { CARD_TIMER_INITIAL_DISPLAY, CARD_TIMER_LENGTH } from '../components/card/card';
 import { BehaviorSubject } from 'rxjs';
-import { BattleResult, GameState } from '../util/gameplay-types';
+import { BattleResult, GameState, Opponent } from '../util/gameplay-types';
 import { OpponentService } from './opponent-service';
 import { generateActionArray } from '../util/gameplay-utils';
 
@@ -38,8 +38,16 @@ export class Gameplay {
     this.playerCards = cards;
   }
 
+  setNewOpponent(opponent: Opponent) {
+    this.opponentService.setOpponent(opponent);
+  }
+
   getPlayerCards() {
     return this.playerCards
+  }
+
+  getOpponentCards() {
+    return this.opponentService.getOpponentCards();
   }
 
   startNewGame() {
@@ -80,7 +88,7 @@ export class Gameplay {
     }
 
     this.attackingCard = playedCard;
-    actionArray ??= generateActionArray(playedCard, gameBoard, false); //generate action array before battle phase
+    actionArray ??= generateActionArray(playedCard.cardStats, playedCard.id, playedCard.cardDisplay, gameBoard, false); //generate action array before battle phase
     const result = this.initiateCardBattles(gameBoard, actionArray);
 
     if (result == BattleResult.NO_BATTLE) {
@@ -100,7 +108,7 @@ export class Gameplay {
           if (result != BattleResult.LOST_BATTLE) {
             //The player won the fight. Take over the enemy card as well as any chained cards.
             this.defendingCard.cardDisplay = this.attackingCard.cardDisplay;
-            let chainedCards = generateActionArray(this.defendingCard, gameBoard, true);
+            let chainedCards = generateActionArray(this.defendingCard.cardStats, this.defendingCard.id, this.defendingCard.cardDisplay, gameBoard, true);
             this.captureDefenselessCards(this.defendingCard, chainedCards, gameBoard);
             this.captureDefenselessCards(this.attackingCard, actionArray, gameBoard);
             
@@ -116,7 +124,7 @@ export class Gameplay {
             //The attacking card lost the fight so it gets converted to the other team and
             //chaining happens
             this.attackingCard.cardDisplay = this.defendingCard.cardDisplay;
-            let chainedCards = generateActionArray(this.attackingCard, gameBoard, true);
+            let chainedCards = generateActionArray(this.attackingCard.cardStats, this.attackingCard.id, this.attackingCard.cardDisplay, gameBoard, true);
             this.captureDefenselessCards(this.attackingCard, chainedCards, gameBoard);
           }
         } else {
@@ -138,28 +146,7 @@ export class Gameplay {
     this.battlePhase(playedCard, gameBoard);
   }
 
-  opponentsTurn(opponentsCards: CardInfo[], gameBoard: CardInfo[]): void {
-    //This method holds the logic for making the opponent's move. What the opponent does with 
-    //their turn will be a factor of the cards that they have, the cards currently on the board,
-    //and the selected skill level of the opponent.
-
-    //First, select the card to play and the grid space to play it in
-    let cardAndLocation = this.randomizeOpponentsTurn(opponentsCards, gameBoard);
-    if (this.opponentLevel >= 0) {
-      //TODO: Add more opponent levels
-    }
-
-    //Afterpicking the card remove it from the opponent's hand, add it to 
-    //the board, then initiate the card battle sequence
-    cardAndLocation.location.cardDisplay = CardDisplay.ENEMY;
-    cardAndLocation.location.cardStats = cardAndLocation.card.cardStats;
-    removeCardFromHandById(cardAndLocation.card.id, opponentsCards);
-
-    this.cardsPlayed++;
-    this.battlePhase(cardAndLocation.location, gameBoard);
-  }
-
-  opponentsTurnThroughService(gameBoard: CardInfo[]): void {
+  opponentsTurn(gameBoard: CardInfo[]): void {
     //This method holds the logic for making the opponent's move. What the opponent does with 
     //their turn will be a factor of the cards that they have, the cards currently on the board,
     //and the selected skill level of the opponent.
@@ -235,14 +222,6 @@ export class Gameplay {
     //caputred without a fight. If the opposing card does have a reciprical arrow though
     //a battle will take place between the two cards, with the victor capturing the other
     //card (and potentially chaining this into other cards).
-
-    //First create an array representing the 8 cardinal directions around the placed card.
-    //If there are opposing cards in that spot relative to the new card then a reference will
-    //be added to this array.
-    // actionArray ??= this.generateActionArray(battleCard, board, false); //TODO: make sure this commented out lines behaves the same as below block
-    // if (!actionArray) {
-    //   actionArray = this.generateActionArray(battleCard, board, false);
-    // }
 
     //If there is a single battle in the action array then carry it out, if there are multiple battles
     //the player gets to decide which battle to start first.

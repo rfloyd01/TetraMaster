@@ -1,48 +1,52 @@
 
-import { CardDisplay, CardinalDirection, CardInfo } from "./card-types";
+import { CardDisplay, CardinalDirection, CardInfo, CardStats } from "./card-types";
 import { cardinalDirectionNeighbor, cardinalDirectionToIndex, getOppositeCardinalDirection } from "./card-util";
 
 /*
 This class contains methods pertaining to gameplay which are useful for multiple classes
 */
 
-export function generateActionArray(battleCard: CardInfo, board: CardInfo[], chain: boolean) {
-  let actionArray: (string | null)[] = [null, null, null, null, null, null, null, null];
+export function generateActionArray(battleCardStats: CardStats, battleCardLocation: number, battleCardDisplay: CardDisplay,
+    board: CardInfo[], chain: boolean) {
+        let actionArray: (string | null)[] = [null, null, null, null, null, null, null, null];
+        Object.keys(CardinalDirection).filter(key => !isNaN(Number(key))).forEach((key) => {
+            const direction = Number(key);
 
-  Object.keys(CardinalDirection).filter(key => !isNaN(Number(key))).forEach((key) => {
-    const direction = Number(key);
-    const hasNeighbor = checkForNeighboringCard(battleCard, direction, board,
-        battleCard.cardDisplay == CardDisplay.FRIEND ? CardDisplay.ENEMY: CardDisplay.FRIEND);
+            if (battleCardStats.activeArrows & (1 << cardinalDirectionToIndex(direction))) {
+                const hasNeighbor = checkForNeighboringCard(battleCardLocation, direction, board,
+                battleCardDisplay == CardDisplay.FRIEND ? CardDisplay.ENEMY: CardDisplay.FRIEND);
 
-    if (hasNeighbor) {
-      let neighboringCard = board[battleCard.id + cardinalDirectionNeighbor(direction)];
+                if (hasNeighbor) {
+                    let neighboringCard = board[battleCardLocation + cardinalDirectionNeighbor(direction)];
 
-      //If the neighboring card has an opposing arrow then set the appropriate index of the 
-      //action array to 'battle', otherwise set it to 'capture'
-      const opposingArrowDirection = getOppositeCardinalDirection(direction);
-      if (chain) {
-        actionArray[cardinalDirectionToIndex(direction)] = 'chain';
-      } else if (neighboringCard.cardStats.activeArrows & opposingArrowDirection) {
-        actionArray[cardinalDirectionToIndex(direction)] = 'battle';
-      } else {
-        actionArray[cardinalDirectionToIndex(direction)] = 'capture';
-      }
-    }
+                    //If the neighboring card has an opposing arrow then set the appropriate index of the 
+                    //action array to 'battle', otherwise set it to 'capture'
+                    const opposingArrowDirection = getOppositeCardinalDirection(direction);
+                    if (chain) {
+                        actionArray[cardinalDirectionToIndex(direction)] = 'chain';
+                    } else if (neighboringCard.cardStats.activeArrows & opposingArrowDirection) {
+                        actionArray[cardinalDirectionToIndex(direction)] = 'battle';
+                    } else {
+                        actionArray[cardinalDirectionToIndex(direction)] = 'capture';
+                    }
+                }
+            }
+
     });
 
   return actionArray;
 }
 
-export function checkForNeighboringCard(currentCard: CardInfo, direction: number, board: CardInfo[], opponentDisplay: CardDisplay): boolean {
+export function checkForNeighboringCard(currentCardLocation: number, direction: number, board: CardInfo[], opponentDisplay: CardDisplay): boolean {
   //Before checking for neighbor, first see if the currentCard has an arrow pointing in the given direction
-  if (!(currentCard.cardStats.activeArrows & (1 << cardinalDirectionToIndex(direction)))) {
-    return false;
-  }
+//   if (!(currentCard.cardStats.activeArrows & (1 << cardinalDirectionToIndex(direction)))) {
+//     return false;
+//   }
 
-  let onUpperEdge: boolean = (currentCard.id < 4);
-  let onRightEdge: boolean = (currentCard.id % 4 == 3);
-  let onLowerEdge: boolean = (currentCard.id >= 12);
-  let onLeftEdge:  boolean = (currentCard.id % 4 == 0);
+  let onUpperEdge: boolean = (currentCardLocation < 4);
+  let onRightEdge: boolean = (currentCardLocation % 4 == 3);
+  let onLowerEdge: boolean = (currentCardLocation >= 12);
+  let onLeftEdge:  boolean = (currentCardLocation % 4 == 0);
   let neighborsOk: boolean = true;
 
   switch (direction) {
@@ -75,5 +79,5 @@ export function checkForNeighboringCard(currentCard: CardInfo, direction: number
       break;
   }
 
-  return neighborsOk && (board[currentCard.id + cardinalDirectionNeighbor(direction)].cardDisplay == opponentDisplay);
+  return neighborsOk && (board[currentCardLocation + cardinalDirectionNeighbor(direction)].cardDisplay == opponentDisplay);
 }

@@ -3,12 +3,11 @@ import { Card } from '../card/card';
 import { AttackStyle, CardDisplay, CardInfo } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 import { Gameplay } from '../../services/gameplay';
-import { cardinalDirectionNeighbor, createDefaultStats, createRandomStats, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../../util/card-util';
+import { cardinalDirectionNeighbor, createDefaultStats, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../../util/card-util';
 import { GameState } from '../../util/gameplay-types';
 import { interval, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { counter } from '../../util/general-utils';
-import { OpponentService } from '../../services/opponent-service';
 import { checkForNeighboringCard } from '../../util/gameplay-utils';
 
 @Component({
@@ -86,6 +85,7 @@ export class GameBoard implements OnInit, OnDestroy {
     this.createRandomBoard();
     this.createPlayerCards();
     this.gameplayService.startNewGame();
+    this.opponentCards = this.gameplayService.getOpponentCards();
   }
 
   quit() {
@@ -138,7 +138,6 @@ export class GameBoard implements OnInit, OnDestroy {
     this.playerCards = this.gameplayService.getPlayerCards();
 
     for (let i:number = 0; i < 5; i++) {
-      this.opponentCards.push({id: i + 100, cardStats: createRandomStats(), isSelected: false, cardDisplay: CardDisplay.BACK, cardText: '' });
       this.playerCards[i].id = i + 105; //update the id for the player cards so that css loads properly
     }
   }
@@ -200,7 +199,7 @@ export class GameBoard implements OnInit, OnDestroy {
     let addBattleString;
     for (let i = 0; i < 8; i++) {
       addBattleString = false;
-      if (checkForNeighboringCard(currentBattleCard, ORDERED_CARDINAL_DIRECTIONS[i], this.gridCards, this.gridCards[gridIndex].cardDisplay)) {
+      if (checkForNeighboringCard(currentBattleCard.id, ORDERED_CARDINAL_DIRECTIONS[i], this.gridCards, this.gridCards[gridIndex].cardDisplay)) {
         if ((gridIndex - currentBattleCard.id) == cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])) {
           addBattleString = true;
         }
@@ -300,7 +299,7 @@ export class GameBoard implements OnInit, OnDestroy {
     //Make the move for the opponent but wrap this in a slight delay
     //so it looks like the opponent is thinking for a bit
     setTimeout(() => {
-      this.gameplayService.opponentsTurn(this.opponentCards, this.gridCards);
+      this.gameplayService.opponentsTurn(this.gridCards);
     }, 1000);
   }
 

@@ -60,13 +60,14 @@ export class OpponentService {
 
     //Create random cards based on the card indices drawn
     this.opponentCards = []; //reset current cards
+    let id:number = 100;
     for (let cardIndex of cardIndices) {
       this.opponentCards.push(
       {
-        id: cardIndex,
+        id: id++,
         cardStats: createRandomStatsForCardType(this.ALL_CARD_TYPES[cardIndex]),
         isSelected: false,
-        cardDisplay: CardDisplay.ENEMY,
+        cardDisplay: CardDisplay.BACK,
         cardText: ''
       });
     }
@@ -88,9 +89,10 @@ export class OpponentService {
   levelZeroMove(gameBoard: CardInfo[]): {card: CardInfo, location: CardInfo} {
     //When the opponent has skill level 0, they simply play a random card in a random location
     //of the board, regardless of arrow configurations or card stats.
+    console.log('Making a level 0 opponent move');
 
     //First pick a random card for the opponent
-    const playCard = this.opponentCards[randomInteger(this.opponentCards.length)]; //TODO: Should I remove the card from the hand here?
+    const playCard = this.opponentCards[randomInteger(this.opponentCards.length)];
 
     //Next pick a random open slot on the board. Make this step easier
     //by first filtering out all non-empty spaces.
@@ -106,6 +108,7 @@ export class OpponentService {
     //where on the board they can move and easily take a card then they'll try to move somewhere
     //where no battle will take place. If that's not possible, they'll then just pick a random
     //spot on the board.
+    console.log('Making a level 1 opponent move');
 
     //Step 0: Get list of empty spaces where the opponent can actually play
     const emptySpaces = gameBoard.filter(space => space.cardDisplay == CardDisplay.EMPTY);
@@ -115,20 +118,25 @@ export class OpponentService {
     // fancy here, just a brute force check
     for (let space of emptySpaces) {
       for (let opponentCard of this.opponentCards) {
-        let actionArray = generateActionArray(opponentCard, gameBoard, false);
+        try {
+          let actionArray = generateActionArray(opponentCard.cardStats, space.id, CardDisplay.ENEMY, gameBoard, false);
 
-        if (actionArray.includes('battle')) {
-          //If a battle will arise then don't place a card here
-          continue;
-        } else if (actionArray.includes('capture')) {
-          //We can capture at least one card without a fight so place the current 
-          //card in this location
-          return {card: opponentCard, location: space};
-        } else {
-          //There's no battle or capture event here which is fine, add the spot to 
-          //the list of non-battle spots for future reference
-          nonBattleOptions.push({card: opponentCard, location: space});
+          if (actionArray.includes('battle')) {
+            //If a battle will arise then don't place a card here
+            continue;
+          } else if (actionArray.includes('capture')) {
+            //We can capture at least one card without a fight so place the current 
+            //card in this location
+            return {card: opponentCard, location: space};
+          } else {
+            //There's no battle or capture event here which is fine, add the spot to 
+            //the list of non-battle spots for future reference
+            nonBattleOptions.push({card: opponentCard, location: space});
+          }
+        } catch (error) {
+          console.log(error);
         }
+        
       }
     }
 

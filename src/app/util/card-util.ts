@@ -86,6 +86,10 @@ export function createDefaultStats() {
     return createStats(0, 0, AttackStyle.PHYSICAL, 0, 0);
 }
 
+export function createDefaultStatsWithRandomArrows() {
+    return createStats(randomInteger(256), 0, AttackStyle.PHYSICAL, 0, 0);
+}
+
 export function createRandomStats() {
     //Generate the AttackStyle. There's an 90% chance for a standard attack type,
     //9% chance for the Flexible style and a 1% chance for Assault style

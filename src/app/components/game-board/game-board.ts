@@ -8,6 +8,8 @@ import { GameState } from '../../util/gameplay-types';
 import { interval, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { counter } from '../../util/general-utils';
+import { OpponentService } from '../../services/opponent-service';
+import { checkForNeighboringCard } from '../../util/gameplay-utils';
 
 @Component({
   selector: 'app-game-board',
@@ -198,7 +200,7 @@ export class GameBoard implements OnInit, OnDestroy {
     let addBattleString;
     for (let i = 0; i < 8; i++) {
       addBattleString = false;
-      if (this.gameplayService.checkForNeighboringCard(currentBattleCard, ORDERED_CARDINAL_DIRECTIONS[i], this.gridCards, this.gridCards[gridIndex].cardDisplay)) {
+      if (checkForNeighboringCard(currentBattleCard, ORDERED_CARDINAL_DIRECTIONS[i], this.gridCards, this.gridCards[gridIndex].cardDisplay)) {
         if ((gridIndex - currentBattleCard.id) == cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])) {
           addBattleString = true;
         }

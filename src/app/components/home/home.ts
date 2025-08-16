@@ -65,7 +65,7 @@ export class Home implements OnInit {
         if (res == 1) {
           const userCards = this.userService.getUserCards();
           if (userCards) {
-            this.allCards = userCards;
+            this.allCards = JSON.parse(JSON.stringify(userCards)); //make a deep copy of the cards to prevent accidentally overwriting anything
             this.displayLoginModal = false;
           }
           

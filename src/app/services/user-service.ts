@@ -16,7 +16,29 @@ export class UserService {
   constructor(private readonly httpService: TetraMasterHttpService) {}
 
   getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
+    const tokenString = localStorage.getItem(this.tokenKey);
+
+    if (!this.isTokenExpired(tokenString)) {
+      return tokenString as string;
+    } else {
+      //If the token is expired and the user is still logged in
+      //(user isn't null) then attempt to refresh the token in the
+      //backend
+    }
+
+    return null;
+  }
+
+  isTokenExpired(tokenString: string | null): boolean {
+    if (tokenString) {
+      console.log(tokenString);
+      const tokenValue = JSON.parse(atob(tokenString.split('.')[1]));
+      const expirationInMs = tokenValue.exp * 1000;
+
+      return Date.now() > expirationInMs;
+    }
+
+    return true;
   }
 
   loadUserCards() {
@@ -25,9 +47,9 @@ export class UserService {
     } else {
       //If the jwt is present but the user object is null, make a call to the 
       //backend using the jwt to get user info
-      let jwtToken = this.getToken();
-      if (jwtToken) {
-        this.login('', '', jwtToken);
+      const jwt = this.getToken();
+      if (jwt) {
+        this.login('', '', jwt);
       } else {
         //If there is no jwt then set the login result to false
         this.loginResult.next(0);

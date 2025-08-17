@@ -111,7 +111,12 @@ export class UserService {
 
     for (let cardJson of userInfoJson.cards) {
       const card: CardInfo = {
-        id: cardJson.card_type,
+        compositeId: {
+          boardLocation: 0,
+          uniqueId: cardJson.card_id,
+          userSlot: 0,
+          cardTypeId: cardJson.card_type
+        },
         cardStats: {
           activeArrows: cardJson.arrows,
           attackPower: cardJson.attack_power,

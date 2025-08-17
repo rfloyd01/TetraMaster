@@ -19,7 +19,8 @@ import { Subscription } from 'rxjs';
 export class Home implements OnInit {
 
   allCards: CardInfo[][][] = [];
-  selectedCards: {info: CardInfo, type: number}[] = []; //selected cards appear on right side of screen, these will be used in the game
+  //TODO: type is now included in card info interface
+  selectedCards: {info: CardInfo, type: number}[] = []; //selected cards appear on right side of screen, these will be used in the game 
 
   totalCardCount: number = 0;
   uniqueCardCount: number = 0;
@@ -119,7 +120,12 @@ export class Home implements OnInit {
       }
 
       this.allCards[row][col].push({
-        id: 10 * col + row,
+        compositeId: {
+          boardLocation: 0,
+          uniqueId: randomInteger(1000000), //possible for collision but that's ok for random cards
+          userSlot: 0,
+          cardTypeId: 10 * col + row
+        },
         cardStats: createRandomStatsForCardType(this.ALL_CARD_TYPES[10 * col + row]), //need to transpose row and column to match grid
         isSelected: false,
         cardDisplay: CardDisplay.FRIEND,
@@ -160,19 +166,24 @@ export class Home implements OnInit {
     if (index == 0) {
       this.selectedCards.push({
         info: {
-          id: this.selectedCards.length,
+          compositeId: {
+            boardLocation: 0,
+            uniqueId: this.highlightedCards[0].compositeId.uniqueId,
+            userSlot: this.selectedCards.length,
+            cardTypeId: this.highlightedCards[0].compositeId.cardTypeId
+          },
           cardStats: this.highlightedCards[0].cardStats,
           isSelected: false,
           cardDisplay: CardDisplay.FRIEND,
           cardText: ''
         },
-        type: this.highlightedCards[0].id
+        type: this.highlightedCards[0].compositeId.cardTypeId
       })
 
       //The selected card needs to be removed from the grid, and the highlighted
       //cards array.
-      const row = this.highlightedCards[0].id % 10;
-      const col = Math.floor(this.highlightedCards[0].id / 10);
+      const row = this.highlightedCards[0].compositeId.cardTypeId % 10;
+      const col = Math.floor(this.highlightedCards[0].compositeId.cardTypeId / 10);
       
       this.highlightedCards = this.highlightedCards.length > 1 ? this.highlightedCards.slice(1) : [];
       this.allCards[row][col] = this.highlightedCards;
@@ -219,7 +230,12 @@ export class Home implements OnInit {
     const col = Math.floor(type / 10);
     const row = type % 10;
     this.allCards[row][col].push({
-        id: type,
+        compositeId: {
+          boardLocation: 0,
+          uniqueId: this.selectedCards[index].info.compositeId.uniqueId,
+          userSlot: 0,
+          cardTypeId: this.selectedCards[index].info.compositeId.cardTypeId
+        },
         cardStats: this.selectedCards[index].info.cardStats,
         isSelected: false,
         cardDisplay: CardDisplay.FRIEND,
@@ -227,7 +243,7 @@ export class Home implements OnInit {
       }
     );
 
-    if ((this.highlightedCards.length) > 0 && (this.highlightedCards[0].id == type)) {
+    if ((this.highlightedCards.length) > 0 && (this.highlightedCards[0].compositeId.cardTypeId == type)) {
       this.highlightedCards = this.allCards[row][col];
     }
 

@@ -4,7 +4,7 @@
     <div class="enemy-card-holder">
         <app-card *ngFor="let card of opponentCards; let i = index"
         [ngClass]="'slot-' + i"
-        [id]="card.id"
+        [id]="card.compositeId.userSlot"
         [cardDisplay]="card.cardDisplay"
         [cardStats]="card.cardStats"></app-card>
     </div>
@@ -22,7 +22,7 @@
     </div>
     <div class="player-card-holder">
         <app-card *ngFor="let card of playerCards"
-        [id]="card.id"
+        [id]="card.compositeId.userSlot"
         [cardDisplay]="card.cardDisplay"
         [cardStats]="card.cardStats"
         [isSelected]="card.isSelected"

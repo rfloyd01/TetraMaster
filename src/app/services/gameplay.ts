@@ -88,7 +88,7 @@ export class Gameplay {
     }
 
     this.attackingCard = playedCard;
-    actionArray ??= generateActionArray(playedCard.cardStats, playedCard.id, playedCard.cardDisplay, gameBoard, false); //generate action array before battle phase
+    actionArray ??= generateActionArray(playedCard.cardStats, playedCard.compositeId.boardLocation, playedCard.cardDisplay, gameBoard, false); //generate action array before battle phase
     const result = this.initiateCardBattles(gameBoard, actionArray);
 
     if (result == BattleResult.NO_BATTLE) {
@@ -108,7 +108,7 @@ export class Gameplay {
           if (result != BattleResult.LOST_BATTLE) {
             //The player won the fight. Take over the enemy card as well as any chained cards.
             this.defendingCard.cardDisplay = this.attackingCard.cardDisplay;
-            let chainedCards = generateActionArray(this.defendingCard.cardStats, this.defendingCard.id, this.defendingCard.cardDisplay, gameBoard, true);
+            let chainedCards = generateActionArray(this.defendingCard.cardStats, this.defendingCard.compositeId.boardLocation, this.defendingCard.cardDisplay, gameBoard, true);
             this.captureDefenselessCards(this.defendingCard, chainedCards, gameBoard);
             this.captureDefenselessCards(this.attackingCard, actionArray, gameBoard);
             
@@ -124,7 +124,7 @@ export class Gameplay {
             //The attacking card lost the fight so it gets converted to the other team and
             //chaining happens
             this.attackingCard.cardDisplay = this.defendingCard.cardDisplay;
-            let chainedCards = generateActionArray(this.attackingCard.cardStats, this.attackingCard.id, this.attackingCard.cardDisplay, gameBoard, true);
+            let chainedCards = generateActionArray(this.attackingCard.cardStats, this.attackingCard.compositeId.boardLocation, this.attackingCard.cardDisplay, gameBoard, true);
             this.captureDefenselessCards(this.attackingCard, chainedCards, gameBoard);
           }
         } else {
@@ -158,7 +158,7 @@ export class Gameplay {
     //the board, then initiate the card battle sequence
     cardAndLocation.location.cardDisplay = CardDisplay.ENEMY;
     cardAndLocation.location.cardStats = cardAndLocation.card.cardStats;
-    removeCardFromHandById(cardAndLocation.card.id, this.opponentService.getOpponentCards());
+    removeCardFromHandById(cardAndLocation.card.compositeId.userSlot, this.opponentService.getOpponentCards());
 
     this.cardsPlayed++;
     this.battlePhase(cardAndLocation.location, gameBoard);
@@ -192,7 +192,7 @@ export class Gameplay {
     let defendingCards: CardInfo[] = [];
     for (let i:number = 0; i < 8; i++) {
       if (actionArray[i] == 'battle') {
-        defendingCards.push(board[attackingCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])]);
+        defendingCards.push(board[attackingCard.compositeId.boardLocation + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])]);
       }
     }
 
@@ -235,9 +235,9 @@ export class Gameplay {
     if (battleCount == 1) {
       //Carry out the single battle
       const defendingCardDirection = ORDERED_CARDINAL_DIRECTIONS[actionArray.indexOf('battle')];
-      this.defendingCard = board[this.attackingCard.id + cardinalDirectionNeighbor(defendingCardDirection)];
+      this.defendingCard = board[this.attackingCard.compositeId.boardLocation + cardinalDirectionNeighbor(defendingCardDirection)];
 
-      if (this.handleCardBattle(this.attackingCard, this.defendingCard) == this.attackingCard.id) {
+      if (this.handleCardBattle(this.attackingCard, this.defendingCard) == this.attackingCard.compositeId.boardLocation) {
         battleWon = true;
       } else {
         //The attacking card has lost, convert it to the other team and return from this method
@@ -254,7 +254,7 @@ export class Gameplay {
         //that we're still in the battle phase
         for (let i:number = 0; i < 8; i++) {
           if (actionArray[i] == 'battle') {
-            board[this.attackingCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText = 'Select a Card';
+            board[this.attackingCard.compositeId.boardLocation + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText = 'Select a Card';
           }
         }
       } else {
@@ -264,7 +264,7 @@ export class Gameplay {
           return BattleResult.ERROR; //indicates that there was some error in picking a card to attack
         }
 
-        if (this.handleCardBattle(this.attackingCard, this.defendingCard) != this.attackingCard.id) {
+        if (this.handleCardBattle(this.attackingCard, this.defendingCard) != this.attackingCard.compositeId.boardLocation) {
           return BattleResult.LOST_BATTLE;
         } 
       }
@@ -299,7 +299,7 @@ export class Gameplay {
     this.setBattleAnimation(attackingCard, attackingCard.cardStats.attackPower, attackDiff);
     this.setBattleAnimation(defendingCard, defense, defenseDiff);
 
-    return (attackDiff > defenseDiff) ? attackingCard.id : defendingCard.id;
+    return (attackDiff > defenseDiff) ? attackingCard.compositeId.boardLocation : defendingCard.compositeId.boardLocation;
   }
 
   getDefenseiveNumber(attackType: AttackStyle, defendingCardStats:CardStats): number {
@@ -315,7 +315,7 @@ export class Gameplay {
     for (let cardinalDirection of ORDERED_CARDINAL_DIRECTIONS) {
       const text = neighboringCards[cardinalDirectionToIndex(cardinalDirection)];
       if (text == 'capture' || text == 'chain') {
-        board[capturingCard.id + cardinalDirectionNeighbor(cardinalDirection)].cardDisplay = capturingCard.cardDisplay;
+        board[capturingCard.compositeId.boardLocation + cardinalDirectionNeighbor(cardinalDirection)].cardDisplay = capturingCard.cardDisplay;
       }
     }
   }

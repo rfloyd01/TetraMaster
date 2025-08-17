@@ -64,7 +64,12 @@ export class OpponentService {
     for (let cardIndex of cardIndices) {
       this.opponentCards.push(
       {
-        id: id++,
+        compositeId: {
+          boardLocation: 0,
+          uniqueId: 0,
+          userSlot: id++,
+          cardTypeId: cardIndex
+        },
         cardStats: createRandomStatsForCardType(this.ALL_CARD_TYPES[cardIndex]),
         isSelected: false,
         cardDisplay: CardDisplay.BACK,
@@ -119,7 +124,7 @@ export class OpponentService {
     for (let space of emptySpaces) {
       for (let opponentCard of this.opponentCards) {
         try {
-          let actionArray = generateActionArray(opponentCard.cardStats, space.id, CardDisplay.ENEMY, gameBoard, false);
+          let actionArray = generateActionArray(opponentCard.cardStats, space.compositeId.boardLocation, CardDisplay.ENEMY, gameBoard, false);
 
           if (actionArray.includes('battle')) {
             //If a battle will arise then don't place a card here

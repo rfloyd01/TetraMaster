@@ -33,6 +33,8 @@ export class GameBoard implements OnInit, OnDestroy {
   displayButtons!: boolean;
   gameplaySubscription!: Subscription | null;
   faceUpEnemyCardHolder: boolean = false;
+  opponentCardsOnBoard: number = 0;
+  playerCardsOnBoard: number = 0;
 
   //Coin FLipping Variables
   showCoin: boolean = false;
@@ -94,15 +96,13 @@ export class GameBoard implements OnInit, OnDestroy {
   }
 
   resetGameVariables() {
-    // this.gridCards = [];
-    // this.playerCards = [];
-    // this.opponentCards = [];
-
     this.selectedCard = null;
     this.playerCanMove = false;
     this.selectionType = 0; //Selecting a grid space will either play a card, or choose an opponent card for battle
     this.displayButtons = false;
     this.faceUpEnemyCardHolder = false;
+    this.opponentCardsOnBoard = 0;
+    this.playerCardsOnBoard = 0;
   }
 
   createPlayerCards() {
@@ -265,6 +265,11 @@ export class GameBoard implements OnInit, OnDestroy {
           break;
         }
     }
+
+    //At the end of each turn, update the number of cards currently on the board
+    //for each player
+    this.opponentCardsOnBoard = this.gameplayService.getOpponentCardsOnBoard();
+    this.playerCardsOnBoard = this.gameplayService.getPlayerCardsOnBoard();
   }
 
   startPlayerTurn() {

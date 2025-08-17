@@ -55,10 +55,19 @@ export class Gameplay {
     return this.gameBoard;
   }
 
+  getOpponentCardsOnBoard() {
+    return this.gameBoard.filter(card => card.cardDisplay == CardDisplay.ENEMY).length;
+  }
+
+  getPlayerCardsOnBoard() {
+    return this.gameBoard.filter(card => card.cardDisplay == CardDisplay.FRIEND).length;
+  }
+
   startNewGame() {
     //Initialize variables with default values, generate opponent cards and then emit the Game Start state
     this.opponentService.generateOpponentCards();
     this.createRandomBoard();
+
     this.setAndEmitState(GameState.GAME_START);
   }
 

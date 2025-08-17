@@ -8,7 +8,13 @@
             [id]="card.compositeId.userSlot"
             [cardDisplay]="card.cardDisplay"
             [cardStats]="card.cardStats"></app-card>
+            <div class="big-num-top">{{opponentCardsOnBoard}}</div>
+            <div class="big-num-bot">{{playerCardsOnBoard}}</div>
+            <div class="number-divider">
+                <img src="assets/number-divider.png" alt="assets/number-divider.png" />
+            </div>
         </div>
+        
         <div *ngIf="faceUpEnemyCardHolder" class="face-up-enemy-card-holder">
             <app-card *ngFor="let card of opponentCards"
             [id]="card.compositeId.userSlot"

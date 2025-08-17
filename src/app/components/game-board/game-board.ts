@@ -107,15 +107,6 @@ export class GameBoard implements OnInit, OnDestroy {
     this.playerCardsOnBoard = 0;
   }
 
-  createPlayerCards() {
-    //Generate 10 cards with randomized stats and give them to the player and opponent
-    // this.playerCards = this.gameplayService.getPlayerCards();
-
-    // for (let i:number = 0; i < 5; i++) {
-    //   this.playerCards[i].compositeId.userSlot = i + 105; //update the id for the player cards so that css loads properly
-    // }
-  }
-
   selectPlayerCard(card: CardInfo) {
     //Don't let the player select a card if it isn't their turn
     if (this.playerCanMove) {
@@ -129,6 +120,13 @@ export class GameBoard implements OnInit, OnDestroy {
       //Then flip the selection status of the selected card (deselecting is an option)
       card.isSelected = !card.isSelected;
       this.selectedCard = card.isSelected ? card : null;
+    } else if (this.selectionType == 2) {
+      //If the selection type equals 2 it means the player has won the game and gets to 
+      //steal one of the opponents cards. Only one of the cards that was converted during
+      //the game can be stolen.
+      if (card.compositeId.userSlot < 105 && card.cardDisplay == CardDisplay.FRIEND) {
+        this.gameplayService.stealOpponentCard(card);
+      }
     }
     
   }
@@ -208,6 +206,12 @@ export class GameBoard implements OnInit, OnDestroy {
     //there are some things that the board component will handle depending
     //on the current game state, for example, letting the player choose
     //which card to play.
+
+    //At the start of each turn, update the number of cards currently on the board
+    //for each player
+    this.opponentCardsOnBoard = this.gameplayService.getOpponentCardsOnBoard();
+    this.playerCardsOnBoard = this.gameplayService.getPlayerCardsOnBoard();
+
     switch (state) {
       case GameState.GAME_INIT:
         {
@@ -251,11 +255,16 @@ export class GameBoard implements OnInit, OnDestroy {
         }
       case GameState.GAME_END:
         {
-          this.displayButtons = true;
+          // this.displayButtons = true;
           this.faceUpEnemyCardHolder = true;
           this.displayBoard = false;
 
-          console.log(this.playerCards);
+          if (this.opponentCardsOnBoard > this.playerCardsOnBoard) {
+            this.gameplayService.stealPlayerCard();
+          } else if (this.playerCardsOnBoard > this.opponentCardsOnBoard) {
+            this.selectionType = 2; //allows player to select card from opponent's hand
+          }
+
           break;
         }
       case GameState.PLAYER_TURN:
@@ -268,12 +277,14 @@ export class GameBoard implements OnInit, OnDestroy {
           this.opponentsTurn();
           break;
         }
+      case GameState.LEAVE_GAME:
+        {
+          //The game is done and user card changes have been persisted so 
+          //return to the home screen.
+          this.router.navigate(['']);
+        }
     }
-
-    //At the end of each turn, update the number of cards currently on the board
-    //for each player
-    this.opponentCardsOnBoard = this.gameplayService.getOpponentCardsOnBoard();
-    this.playerCardsOnBoard = this.gameplayService.getPlayerCardsOnBoard();
+    
   }
 
   startPlayerTurn() {

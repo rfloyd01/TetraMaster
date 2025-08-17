@@ -378,9 +378,7 @@ export class Gameplay {
 
     for (let card of originalPlayerCards) {
       this.userService.addCardToCurrentHand(card);
-      // this.playerCards.push(card);
     }
-    console.log(this.userService.getCurrentUserCards());
 
     for (let card of originalOpponentCards) {
       this.opponentService.addOpponentCard(card);
@@ -392,11 +390,24 @@ export class Gameplay {
     //and will be persisted in the database. In the case that the opponent has a perfect game, then the 
     //player will lose all 5 of the cards they used in the game.
     if (this.getPlayerCardsOnBoard() == 0) {
-      //TODO: Remove all cards at once and persist via UserService
+      this.userService.removeCurrentHandFromUser();
     } else {
-      // const stolenCard = this.opponentService.stealPlayerCard(this.playerCards);
-      //TODO: Persist change via the UserService
+      let removalCard = this.opponentService.stealPlayerCard(this.userService.getCurrentUserCards());
+      console.log(removalCard);
+      this.userService.removeCardFromUser(removalCard);
     }
-    
+
+    this.userService.moveCardsFromHandToDeck();
+    this.setAndEmitState(GameState.LEAVE_GAME);
+  }
+
+  stealOpponentCard(card: CardInfo) {
+    //When the player wins they get to steal a card from the opponent. Once the user selects the card
+    //it will be sent here where it can then be persisted.
+    this.opponentService.removeOpponentCard(card);
+    this.userService.moveCardsFromHandToDeck();
+    this.userService.addCardToUser(card);
+
+    this.setAndEmitState(GameState.LEAVE_GAME);
   }
 }

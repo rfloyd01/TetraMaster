@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { CardStats, UserJson } from '../util/card-types';
+import { CardStats, UserCardJson, UserJson } from '../util/card-types';
 
 @Injectable({
   providedIn: 'root'
@@ -38,8 +38,27 @@ export class TetraMasterHttpService {
     return this.http.post<boolean>('/tetra-master/add-card', body, { headers });
   }
 
-  removeCard(jwtToken: string, card: {cardStats: CardStats, cardType: number}): Observable<boolean> {
+  addCards(jwtToken: string, cards: {cardStats: CardStats, cardType: number}[]): Observable<boolean> {
+    let jsonCards: UserCardJson[] = [];
+
+    for (let card of cards) {
+      jsonCards.push({
+        card_type: card.cardType,
+        arrows: card.cardStats.activeArrows,
+        attack_power: card.cardStats.attackPower,
+        attack_style: card.cardStats.attackStyle,
+        physical_defense: card.cardStats.physicalDefense,
+        magical_defense: card.cardStats.magicalDefense
+      })
+    }
+    
+    const headers: HttpHeaders = new HttpHeaders({'Authorization': 'Bearer ' + jwtToken});
+    return this.http.post<boolean>('/tetra-master/add-cards', jsonCards, { headers });
+  }
+
+  removeCard(jwtToken: string, card: {cardStats: CardStats, cardType: number, cardId: number | undefined}): Observable<boolean> {
     const body = {
+      card_id: card.cardId ? card.cardId : 0,
       card_type: card.cardType,
       arrows: card.cardStats.activeArrows,
       attack_power: card.cardStats.attackPower,
@@ -49,5 +68,24 @@ export class TetraMasterHttpService {
     }
     const headers: HttpHeaders = new HttpHeaders({'Authorization': 'Bearer ' + jwtToken});
     return this.http.post<boolean>('/tetra-master/remove-card', body, { headers });
+  }
+
+  removeCards(jwtToken: string, cards: {cardStats: CardStats, cardType: number, cardId: number | undefined}[]): Observable<boolean> {
+    let jsonCards: UserCardJson[] = [];
+
+    for (let card of cards) {
+      jsonCards.push({
+        card_id: card.cardId ? card.cardId : 0,
+        card_type: card.cardType,
+        arrows: card.cardStats.activeArrows,
+        attack_power: card.cardStats.attackPower,
+        attack_style: card.cardStats.attackStyle,
+        physical_defense: card.cardStats.physicalDefense,
+        magical_defense: card.cardStats.magicalDefense
+      })
+    }
+
+    const headers: HttpHeaders = new HttpHeaders({'Authorization': 'Bearer ' + jwtToken});
+    return this.http.post<boolean>('/tetra-master/remove-cards', jsonCards, { headers });
   }
 }

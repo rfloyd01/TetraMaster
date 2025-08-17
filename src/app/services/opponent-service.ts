@@ -9,7 +9,7 @@ import { generateActionArray } from '../util/gameplay-utils';
 })
 export class OpponentService {
   opponent!: Opponent;
-  opponentCards!: CardInfo[];
+  opponentCards: CardInfo[] = [];
   sliderMovement: number = 48.0 / 64.0;
 
   //Imports
@@ -26,6 +26,15 @@ export class OpponentService {
   addOpponentCard(card: CardInfo) {
     //Add the given card to the opponent's hand
     this.opponentCards.push(card);
+  }
+
+  removeOpponentCard(card: CardInfo) {
+    removeCardFromHandByUserSlotId(card.compositeId.userSlot, this.opponentCards);
+
+    //update the slot ids for each card after removing from the array
+    for (let i = 0; i < this.opponentCards.length; i++) {
+      this.opponentCards[i].compositeId.userSlot = 100 + i;
+    }
   }
 
   stealPlayerCard(playerCards: CardInfo[]): CardInfo {
@@ -75,9 +84,10 @@ export class OpponentService {
     const minCard = Math.floor(cardLevel * this.sliderMovement);
     const maxCard = minCard + 7;
 
-    //Pick 5 cards randomly within the given range.
+    //Pick 5 cards randomly within the given range. If there are already some cards in the 
+    //array then generate enough cards to make 5 total.
     let cardIndices: number[] = [];
-    for (let i:number = 0; i < 5; i++) {
+    for (let i:number = 0; i < (5 - this.opponentCards.length); i++) {
       cardIndices.push(randomInteger(maxCard, minCard));
     }
 
@@ -87,8 +97,7 @@ export class OpponentService {
     // cards to choose from, level 16 the next three rare cards, etc.)
 
     //Create random cards based on the card indices drawn
-    this.opponentCards = []; //reset current cards
-    let id:number = 100;
+    let id:number = 100 + this.opponentCards.length;
     for (let cardIndex of cardIndices) {
       this.opponentCards.push(
       {

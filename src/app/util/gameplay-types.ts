@@ -4,7 +4,8 @@ export enum GameState {
     OPPONENT_TURN = 2,
     PLAYER_SELECT_BATTLE = 3,
     GAME_END = 4,
-    GAME_INIT = 5
+    GAME_INIT = 5,
+    LEAVE_GAME = 6
 }
 
 export enum BattleResult {

@@ -22,9 +22,9 @@ export class GameBoard implements OnInit, OnDestroy {
   cardDisplay = CardDisplay;
 
   //Card Arrays
-  gridCards!: CardInfo[];
-  playerCards!: CardInfo[];
-  opponentCards!: CardInfo[];
+  gridCards: CardInfo[] = [];
+  playerCards: CardInfo[] = [];
+  opponentCards: CardInfo[] = [];
 
   //State Variables
   selectedCard!: CardInfo | null;
@@ -82,10 +82,11 @@ export class GameBoard implements OnInit, OnDestroy {
     console.log('Starting a new game');
     
     this.resetGameVariables();
-    this.createRandomBoard();
+    // this.createRandomBoard();
     this.createPlayerCards();
     this.gameplayService.startNewGame();
     this.opponentCards = this.gameplayService.getOpponentCards();
+    this.gridCards = this.gameplayService.getGameBoard();
   }
 
   quit() {
@@ -93,49 +94,14 @@ export class GameBoard implements OnInit, OnDestroy {
   }
 
   resetGameVariables() {
-    this.gridCards = [];
-    this.playerCards = [];
-    this.opponentCards = [];
+    // this.gridCards = [];
+    // this.playerCards = [];
+    // this.opponentCards = [];
 
     this.selectedCard = null;
     this.playerCanMove = false;
     this.selectionType = 0; //Selecting a grid space will either play a card, or choose an opponent card for battle
     this.displayButtons = false;
-  }
-
-  createRandomBoard() {
-    //First generate a random number between 0 and 6, this will represent how many slots
-    //in the board are blocked off.
-    const blockers = randomInteger(6);
-
-    //Randomly assign the blockers
-    let assignedBlockers:number = 0b0;
-    for (let i:number = 0; i < blockers; i++) {
-      while (true) {
-        const blockerLocation = randomInteger(16);
-        if (!(assignedBlockers & (1 << blockerLocation))) {
-          assignedBlockers |= (1 << blockerLocation);
-          break;
-        }
-      }
-    }
-
-    //Once blockers are assigned create cards and place them into the grid
-    //array. These cards will eventually have their stats overriden by player cards.
-    for (let i: number = 0; i < 16; i++) {
-      this.gridCards.push({
-        compositeId: {
-          boardLocation: i,
-          uniqueId: 0,
-          userSlot: 0,
-          cardTypeId: 0
-        },
-        cardStats: createDefaultStats(),
-        isSelected: false,
-        cardDisplay: (assignedBlockers & (1 << i)) ? CardDisplay.BLOCKED : CardDisplay.EMPTY,
-        cardText: ''
-      });
-    }
   }
 
   createPlayerCards() {
@@ -193,7 +159,7 @@ export class GameBoard implements OnInit, OnDestroy {
       this.playerCanMove = false;
 
       //After placing card on board and removing from hand, initiate game play sequence
-      this.gameplayService.playerTurn(this.gridCards[gridIndex], this.gridCards);
+      this.gameplayService.playerTurn(this.gridCards[gridIndex]);
     } 
   }
 
@@ -231,7 +197,7 @@ export class GameBoard implements OnInit, OnDestroy {
 
     //Initiate the selected battle, regardless of outcome of this battle the current battle card is set
     //back to a null value
-    this.gameplayService.battlePhase(currentBattleCard, this.gridCards, fauxActionArray);
+    this.gameplayService.battlePhase(currentBattleCard, fauxActionArray);
   }
 
   advanceGame(state: GameState) {
@@ -311,7 +277,7 @@ export class GameBoard implements OnInit, OnDestroy {
     //Make the move for the opponent but wrap this in a slight delay
     //so it looks like the opponent is thinking for a bit
     setTimeout(() => {
-      this.gameplayService.opponentsTurn(this.gridCards);
+      this.gameplayService.opponentsTurn();
     }, 1000);
   }
 

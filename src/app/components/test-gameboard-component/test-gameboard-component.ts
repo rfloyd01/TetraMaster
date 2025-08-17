@@ -22,9 +22,9 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
   cardDisplay = CardDisplay;
 
   //Card Arrays
-  gridCards!: CardInfo[];
-  playerCards!: CardInfo[];
-  opponentCards!: CardInfo[];
+  gridCards: CardInfo[] = [];
+  playerCards: CardInfo[] = [];
+  opponentCards: CardInfo[] = [];
 
   //State Variables
   selectedCard!: CardInfo | null;
@@ -83,6 +83,7 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
     this.createRandomBoard();
     this.createPlayerCards();
     this.gameplayService.startNewGame();
+    this.gridCards = this.gameplayService.getGameBoard();
   }
 
   quit() {
@@ -90,9 +91,9 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
   }
 
   resetGameVariables() {
-    this.gridCards = [];
-    this.playerCards = [];
-    this.opponentCards = [];
+    // this.gridCards = [];
+    // this.playerCards = [];
+    // this.opponentCards = [];
 
     this.selectedCard = null;
     this.playerCanMove = false;
@@ -198,7 +199,7 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
       this.playerCanMove = false;
 
       //After placing card on board and removing from hand, initiate game play sequence
-      this.gameplayService.playerTurn(this.gridCards[gridIndex], this.gridCards);
+      this.gameplayService.playerTurn(this.gridCards[gridIndex]);
     } 
   }
 
@@ -236,7 +237,7 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
 
     //Initiate the selected battle, regardless of outcome of this battle the current battle card is set
     //back to a null value
-    this.gameplayService.battlePhase(currentBattleCard, this.gridCards, fauxActionArray);
+    this.gameplayService.battlePhase(currentBattleCard, fauxActionArray);
   }
 
   advanceGame(state: GameState) {

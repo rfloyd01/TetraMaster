@@ -24,7 +24,7 @@
             (click)="selectPlayerCard(card)"></app-card>
         </div>
     </div>
-    <div class="card-grid">
+    <div *ngIf="displayBoard" class="card-grid">
         <div *ngIf="showCoin"  class="coin-image">
             <img [src]="coinImagePrefix + coinImageNumber + coinImageType" [alt]="coinImagePrefix + coinImageNumber + coinImageType" />
         </div>

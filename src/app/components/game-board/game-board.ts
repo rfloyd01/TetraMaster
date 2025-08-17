@@ -3,7 +3,7 @@ import { Card } from '../card/card';
 import { AttackStyle, CardDisplay, CardInfo } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 import { Gameplay } from '../../services/gameplay';
-import { cardinalDirectionNeighbor, createDefaultStats, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../../util/card-util';
+import { cardinalDirectionNeighbor, createDefaultStats, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandByUserSlotId } from '../../util/card-util';
 import { GameState } from '../../util/gameplay-types';
 import { interval, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
@@ -35,6 +35,7 @@ export class GameBoard implements OnInit, OnDestroy {
   faceUpEnemyCardHolder: boolean = false;
   opponentCardsOnBoard: number = 0;
   playerCardsOnBoard: number = 0;
+  displayBoard: boolean = true;
 
   //Coin FLipping Variables
   showCoin: boolean = false;
@@ -58,7 +59,10 @@ export class GameBoard implements OnInit, OnDestroy {
   ngOnInit(): void {
     //Subscribe to the gameplay update subscription
     //which is responsible for advancing the game state
-    this.resetGameVariables();
+    this.startNewGame();
+    this.playerCards = this.gameplayService.getPlayerCards();
+    this.opponentCards = this.gameplayService.getOpponentCards();
+    this.gridCards = this.gameplayService.getGameBoard();
 
     if (this.gameplaySubscription) {
       this.gameplaySubscription.unsubscribe();
@@ -69,8 +73,7 @@ export class GameBoard implements OnInit, OnDestroy {
         this.advanceGame(value);
       }
     )
-
-    this.startNewGame();
+    
   }
 
   ngOnDestroy(): void {
@@ -85,10 +88,8 @@ export class GameBoard implements OnInit, OnDestroy {
     console.log('Starting a new game');
     
     this.resetGameVariables();
-    this.createPlayerCards();
+    // this.createPlayerCards();
     this.gameplayService.startNewGame();
-    this.opponentCards = this.gameplayService.getOpponentCards();
-    this.gridCards = this.gameplayService.getGameBoard();
   }
 
   quit() {
@@ -101,17 +102,18 @@ export class GameBoard implements OnInit, OnDestroy {
     this.selectionType = 0; //Selecting a grid space will either play a card, or choose an opponent card for battle
     this.displayButtons = false;
     this.faceUpEnemyCardHolder = false;
+    this.displayBoard = true;
     this.opponentCardsOnBoard = 0;
     this.playerCardsOnBoard = 0;
   }
 
   createPlayerCards() {
     //Generate 10 cards with randomized stats and give them to the player and opponent
-    this.playerCards = this.gameplayService.getPlayerCards();
+    // this.playerCards = this.gameplayService.getPlayerCards();
 
-    for (let i:number = 0; i < 5; i++) {
-      this.playerCards[i].compositeId.userSlot = i + 105; //update the id for the player cards so that css loads properly
-    }
+    // for (let i:number = 0; i < 5; i++) {
+    //   this.playerCards[i].compositeId.userSlot = i + 105; //update the id for the player cards so that css loads properly
+    // }
   }
 
   selectPlayerCard(card: CardInfo) {
@@ -153,7 +155,7 @@ export class GameBoard implements OnInit, OnDestroy {
       this.gridCards[gridIndex].compositeId.userSlot = this.selectedCard.compositeId.userSlot;
 
       //Remove the card from the player's hand
-      removeCardFromHandById(this.selectedCard.compositeId.userSlot, this.playerCards);
+      removeCardFromHandByUserSlotId(this.selectedCard.compositeId.userSlot, this.playerCards);
       this.selectedCard = null;
 
       //If a multi-battle scenario pops up, lock player out from selecting another card mid-turn
@@ -249,9 +251,11 @@ export class GameBoard implements OnInit, OnDestroy {
         }
       case GameState.GAME_END:
         {
-          //TODO: Add logic for stealing cards here
           this.displayButtons = true;
           this.faceUpEnemyCardHolder = true;
+          this.displayBoard = false;
+
+          console.log(this.playerCards);
           break;
         }
       case GameState.PLAYER_TURN:

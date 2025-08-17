@@ -20,7 +20,7 @@ export class Home implements OnInit {
 
   allCards: CardInfo[][][] = [];
   //TODO: type is now included in card info interface
-  selectedCards: {info: CardInfo, type: number}[] = []; //selected cards appear on right side of screen, these will be used in the game 
+  selectedCards: CardInfo[] = []; //selected cards appear on right side of screen, these will be used in the game 
 
   totalCardCount: number = 0;
   uniqueCardCount: number = 0;
@@ -66,7 +66,8 @@ export class Home implements OnInit {
         if (res == 1) {
           const userCards = this.userService.getUserCards();
           if (userCards) {
-            this.allCards = JSON.parse(JSON.stringify(userCards)); //make a deep copy of the cards to prevent accidentally overwriting anything
+            this.allCards = JSON.parse(JSON.stringify(userCards)); //make a deep copy of the cards to prevent accidentally overwriting anything TODO: Should make a reference copy eventually
+            this.selectedCards = this.userService.getCurrentUserCards();
             this.displayLoginModal = false;
           }
           
@@ -84,7 +85,7 @@ export class Home implements OnInit {
   }
 
   startNewGame() {
-    this.gameService.setPlayerCards(this.selectedCards.map(e => e.info));
+    // this.gameService.setPlayerCards(this.selectedCards.map(e => e.info));
     this.gameService.setNewOpponent({skillLevel: 1, cardLevel: 0}); //TODO: Player should be able to pick opponent, set manually for now
     this.router.navigate(['/game']);
   }
@@ -165,20 +166,17 @@ export class Home implements OnInit {
 
     if (index == 0) {
       this.selectedCards.push({
-        info: {
-          compositeId: {
-            boardLocation: 0,
-            uniqueId: this.highlightedCards[0].compositeId.uniqueId,
-            userSlot: this.selectedCards.length,
-            cardTypeId: this.highlightedCards[0].compositeId.cardTypeId
-          },
-          cardStats: this.highlightedCards[0].cardStats,
-          isSelected: false,
-          cardDisplay: CardDisplay.FRIEND,
-          cardText: ''
+        compositeId: {
+          boardLocation: 0,
+          uniqueId: this.highlightedCards[0].compositeId.uniqueId,
+          userSlot: 105 + this.selectedCards.length,
+          cardTypeId: this.highlightedCards[0].compositeId.cardTypeId
         },
-        type: this.highlightedCards[0].compositeId.cardTypeId
-      })
+        cardStats: this.highlightedCards[0].cardStats,
+        isSelected: false,
+        cardDisplay: CardDisplay.FRIEND,
+        cardText: ''
+      });
 
       //The selected card needs to be removed from the grid, and the highlighted
       //cards array.
@@ -226,17 +224,17 @@ export class Home implements OnInit {
   removeSelectedCard(index: number) {
     //removes the selected card from the player's hand and puts
     //it back into the grid and highlighted cards (if necessary).
-    const type = this.selectedCards[index].type;
+    const type = this.selectedCards[index].compositeId.cardTypeId;
     const col = Math.floor(type / 10);
     const row = type % 10;
     this.allCards[row][col].push({
         compositeId: {
           boardLocation: 0,
-          uniqueId: this.selectedCards[index].info.compositeId.uniqueId,
+          uniqueId: this.selectedCards[index].compositeId.uniqueId,
           userSlot: 0,
-          cardTypeId: this.selectedCards[index].info.compositeId.cardTypeId
+          cardTypeId: this.selectedCards[index].compositeId.cardTypeId
         },
-        cardStats: this.selectedCards[index].info.cardStats,
+        cardStats: this.selectedCards[index].cardStats,
         isSelected: false,
         cardDisplay: CardDisplay.FRIEND,
         cardText: ''
@@ -248,6 +246,11 @@ export class Home implements OnInit {
     }
 
     this.selectedCards.splice(index, 1);
+
+    //update userSlot indices for each card after removing a card
+    for (let i = 0; i < this.selectedCards.length; i++) {
+      this.selectedCards[i].compositeId.userSlot = 105 + i;
+    }
   }
 
   getBoardPieceImage(row: number, col: number) {

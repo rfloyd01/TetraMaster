@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { AttackStyle, CardDisplay, CardInfo, User, UserJson } from '../util/card-types';
 import { TetraMasterHttpService } from './tetra-master-http-service';
 import { BehaviorSubject } from 'rxjs';
+import { removeCardFromHandByUserSlotId } from '../util/card-util';
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +11,7 @@ export class UserService {
 
   private readonly tokenKey = 'auth_token';
   user!: User | null;
+  userCards: CardInfo[] = []; //represents cards that user is currently playing with
 
   loginResult: BehaviorSubject<number> = new BehaviorSubject<number>(-1);
 
@@ -60,6 +62,22 @@ export class UserService {
 
   getUserCards() {
     return this.user?.cards;
+  }
+
+  getCurrentUserCards() {
+    //return a reference to the users current hand
+    return this.userCards;
+  }
+
+  addCardToCurrentHand(card: CardInfo) {
+    //Update the userSlot id for the card and add it to the current card array
+    card.compositeId.userSlot = 105 + this.userCards.length;
+    this.userCards.push(card);
+  }
+
+  removeCardFromCurrentHand(card: CardInfo) {
+    //Remove the given card from the user's current hand
+    removeCardFromHandByUserSlotId(card.compositeId.userSlot, this.userCards);
   }
 
   login(username: string, password: string, jwt?: string) {

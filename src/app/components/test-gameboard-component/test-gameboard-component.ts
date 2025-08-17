@@ -3,7 +3,7 @@ import { Card } from '../card/card';
 import { AttackStyle, CardDisplay, CardInfo } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 import { Gameplay } from '../../services/gameplay';
-import { cardinalDirectionNeighbor, createDefaultStats, createDefaultStatsWithRandomArrows, createRandomStats, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../../util/card-util';
+import { cardinalDirectionNeighbor, createDefaultStats, createDefaultStatsWithRandomArrows, createRandomStats, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandByUserSlotId } from '../../util/card-util';
 import { GameState } from '../../util/gameplay-types';
 import { interval, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
@@ -192,7 +192,7 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
       this.gridCards[gridIndex].compositeId.userSlot = this.selectedCard.compositeId.userSlot;
 
       //Remove the card from the player's hand
-      removeCardFromHandById(this.selectedCard.compositeId.userSlot, this.playerCanMove ? this.playerCards : this.opponentCards);
+      removeCardFromHandByUserSlotId(this.selectedCard.compositeId.userSlot, this.playerCanMove ? this.playerCards : this.opponentCards);
       this.selectedCard = null;
 
       //If a multi-battle scenario pops up, lock player out from selecting another card mid-turn

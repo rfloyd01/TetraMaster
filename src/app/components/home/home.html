@@ -65,10 +65,10 @@
         <!-- Holds the 5 cards selected by user -->
         <app-card *ngFor="let card of selectedCards; let i = index"
         (click)="removeSelectedCard(i)"
-        [id]="card.info.compositeId.userSlot"
-        [cardDisplay]="card.info.cardDisplay"
-        [cardStats]="card.info.cardStats"
-        [isSelected]="card.info.isSelected"
-        [cardType]="card.type"></app-card>
+        [id]="card.compositeId.userSlot"
+        [cardDisplay]="card.cardDisplay"
+        [cardStats]="card.cardStats"
+        [isSelected]="card.isSelected"
+        [cardType]="card.compositeId.cardTypeId"></app-card>
     </div>
 </div>

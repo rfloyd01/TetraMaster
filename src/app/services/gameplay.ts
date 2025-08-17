@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { AttackStyle, CardDisplay, CardInfo, CardStats } from '../util/card-types';
-import { cardinalDirectionNeighbor, cardinalDirectionToIndex, createDefaultStats, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../util/card-util';
+import { cardinalDirectionNeighbor, cardinalDirectionToIndex, createDefaultStats, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandByUserSlotId } from '../util/card-util';
 import { CARD_TIMER_INITIAL_DISPLAY, CARD_TIMER_LENGTH } from '../components/card/card';
 import { BehaviorSubject } from 'rxjs';
 import { BattleResult, GameState, Opponent } from '../util/gameplay-types';
 import { OpponentService } from './opponent-service';
 import { generateActionArray } from '../util/gameplay-utils';
+import { UserService } from './user-service';
 
 @Injectable({
   providedIn: 'root'
@@ -20,23 +21,16 @@ export class Gameplay {
   currentState: GameState = GameState.GAME_START;
   cardsPlayed: number = 0;
 
-  playerCards!: CardInfo[];
   gameBoard!: CardInfo[];
 
   attackingCard!: CardInfo | null;
   defendingCard!: CardInfo | null;
 
-  constructor(private readonly opponentService:OpponentService) {}
+  constructor(private readonly opponentService: OpponentService, private readonly userService: UserService) {}
 
   private setAndEmitState(state: GameState) {
     this.currentState = state;
     this.gameplayUpdate.next(this.currentState);
-  }
-
-  setPlayerCards(cards: CardInfo[]) {
-    //When the player has selected their cards from the home screen and hit the 'New Game'
-    //button, their cards will be set in the service and then injected into the game
-    this.playerCards = cards;
   }
 
   setNewOpponent(opponent: Opponent) {
@@ -44,7 +38,7 @@ export class Gameplay {
   }
 
   getPlayerCards() {
-    return this.playerCards
+    return this.userService.getCurrentUserCards();
   }
 
   getOpponentCards() {
@@ -214,7 +208,7 @@ export class Gameplay {
     cardAndLocation.location.compositeId.uniqueId = cardAndLocation.card.compositeId.uniqueId;
     cardAndLocation.location.compositeId.userSlot = cardAndLocation.card.compositeId.userSlot;
 
-    removeCardFromHandById(cardAndLocation.card.compositeId.userSlot, this.opponentService.getOpponentCards());
+    removeCardFromHandByUserSlotId(cardAndLocation.card.compositeId.userSlot, this.opponentService.getOpponentCards());
 
     this.cardsPlayed++;
     this.battlePhase(cardAndLocation.location);
@@ -379,15 +373,30 @@ export class Gameplay {
     //color.
 
     //Player cards will be ones where the userSlot is < 105, opponent cards have a userSlot >= 105
-    const originalPlayerCards = this.gameBoard.filter(space => (space.compositeId.userSlot >= 100) && (space.compositeId.userSlot < 105)).sort((a, b) => a.compositeId.userSlot - b.compositeId.userSlot);
-    const originalOpponentCards = this.gameBoard.filter(space => space.compositeId.userSlot >= 105).sort((a, b) => a.compositeId.userSlot - b.compositeId.userSlot);
+    const originalOpponentCards = this.gameBoard.filter(space => (space.compositeId.userSlot >= 100) && (space.compositeId.userSlot < 105)).sort((a, b) => a.compositeId.userSlot - b.compositeId.userSlot);
+    const originalPlayerCards = this.gameBoard.filter(space => space.compositeId.userSlot >= 105).sort((a, b) => a.compositeId.userSlot - b.compositeId.userSlot);
 
     for (let card of originalPlayerCards) {
-      this.playerCards.push(card);
+      this.userService.addCardToCurrentHand(card);
+      // this.playerCards.push(card);
     }
+    console.log(this.userService.getCurrentUserCards());
 
     for (let card of originalOpponentCards) {
       this.opponentService.addOpponentCard(card);
     }
+  }
+
+  stealPlayerCard() {
+    //If the opponent wins the game they get to steal one of the players cards. This change is permanent
+    //and will be persisted in the database. In the case that the opponent has a perfect game, then the 
+    //player will lose all 5 of the cards they used in the game.
+    if (this.getPlayerCardsOnBoard() == 0) {
+      //TODO: Remove all cards at once and persist via UserService
+    } else {
+      // const stolenCard = this.opponentService.stealPlayerCard(this.playerCards);
+      //TODO: Persist change via the UserService
+    }
+    
   }
 }

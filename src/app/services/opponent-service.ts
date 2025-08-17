@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Opponent } from '../util/gameplay-types';
 import { CARD_TYPES, CardDisplay, CardInfo } from '../util/card-types';
-import { createRandomStatsForCardType, randomInteger } from '../util/card-util';
+import { createRandomStatsForCardType, randomInteger, removeCardFromHandByUserSlotId } from '../util/card-util';
 import { generateActionArray } from '../util/gameplay-utils';
 
 @Injectable({
@@ -26,6 +26,29 @@ export class OpponentService {
   addOpponentCard(card: CardInfo) {
     //Add the given card to the opponent's hand
     this.opponentCards.push(card);
+  }
+
+  stealPlayerCard(playerCards: CardInfo[]): CardInfo {
+    //If the opponent wins a game then they get to steal one of the cards from 
+    //the player which was converted during the game. Always opt to steal the 
+    //card with the highest attack power. After taking the card in question,
+    //add it to the opponent's current hand, opting to drop the card with the 
+    //lowest attack power.
+    const stealableCards = playerCards.filter(card => card.cardDisplay == CardDisplay.ENEMY).sort((a, b) => b.cardStats.attackPower - a.cardStats.attackPower);
+    const stolenCard = stealableCards[0];
+
+    removeCardFromHandByUserSlotId(stolenCard.compositeId.userSlot, playerCards);
+
+    //Now find the weakest card in the opponent's hand and replace it with the stats
+    //and composite id (other than the userSlot) of the stolen card
+    const weakestOpponentCardIndex = this.opponentCards.findIndex(card => card.cardStats.attackPower == [...this.opponentCards].sort((a, b) => a.cardStats.attackPower - b.cardStats.attackPower)[0].cardStats.attackPower);
+    this.opponentCards[weakestOpponentCardIndex].cardStats = stolenCard.cardStats;
+    this.opponentCards[weakestOpponentCardIndex].compositeId.boardLocation = 0;
+    this.opponentCards[weakestOpponentCardIndex].compositeId.cardTypeId = stolenCard.compositeId.cardTypeId;
+    this.opponentCards[weakestOpponentCardIndex].compositeId.uniqueId = 0;
+
+    //Return the stolen card so it can be removed from the user in the database
+    return stolenCard;
   }
 
   generateOpponentCards() {
@@ -99,7 +122,7 @@ export class OpponentService {
   levelZeroMove(gameBoard: CardInfo[]): {card: CardInfo, location: CardInfo} {
     //When the opponent has skill level 0, they simply play a random card in a random location
     //of the board, regardless of arrow configurations or card stats.
-    console.log('Making a level 0 opponent move');
+    // console.log('Making a level 0 opponent move');
 
     //First pick a random card for the opponent
     const playCard = this.opponentCards[randomInteger(this.opponentCards.length)];
@@ -118,7 +141,7 @@ export class OpponentService {
     //where on the board they can move and easily take a card then they'll try to move somewhere
     //where no battle will take place. If that's not possible, they'll then just pick a random
     //spot on the board.
-    console.log('Making a level 1 opponent move');
+    // console.log('Making a level 1 opponent move');
 
     //Step 0: Get list of empty spaces where the opponent can actually play
     const emptySpaces = gameBoard.filter(space => space.cardDisplay == CardDisplay.EMPTY);

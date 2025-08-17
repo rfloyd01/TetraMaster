@@ -135,7 +135,6 @@ export class UserService {
       cardInfo[row][col].push(card);
     }
 
-    console.log(cardInfo);
     return { username: userInfoJson.username, cards: cardInfo }
   }
 }

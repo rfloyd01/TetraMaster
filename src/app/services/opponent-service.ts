@@ -23,6 +23,11 @@ export class OpponentService {
     return this.opponentCards;
   }
 
+  addOpponentCard(card: CardInfo) {
+    //Add the given card to the opponent's hand
+    this.opponentCards.push(card);
+  }
+
   generateOpponentCards() {
     //Generate cards for the opponent based on their card level. Per the TetraMaster
     //wiki, opponents have 16 cards in their deck where the same card can be in the 

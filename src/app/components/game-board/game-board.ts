@@ -32,6 +32,7 @@ export class GameBoard implements OnInit, OnDestroy {
   selectionType!: number;
   displayButtons!: boolean;
   gameplaySubscription!: Subscription | null;
+  faceUpEnemyCardHolder: boolean = false;
 
   //Coin FLipping Variables
   showCoin: boolean = false;
@@ -82,7 +83,6 @@ export class GameBoard implements OnInit, OnDestroy {
     console.log('Starting a new game');
     
     this.resetGameVariables();
-    // this.createRandomBoard();
     this.createPlayerCards();
     this.gameplayService.startNewGame();
     this.opponentCards = this.gameplayService.getOpponentCards();
@@ -102,6 +102,7 @@ export class GameBoard implements OnInit, OnDestroy {
     this.playerCanMove = false;
     this.selectionType = 0; //Selecting a grid space will either play a card, or choose an opponent card for battle
     this.displayButtons = false;
+    this.faceUpEnemyCardHolder = false;
   }
 
   createPlayerCards() {
@@ -248,8 +249,9 @@ export class GameBoard implements OnInit, OnDestroy {
         }
       case GameState.GAME_END:
         {
-          console.log('game over');
+          //TODO: Add logic for stealing cards here
           this.displayButtons = true;
+          this.faceUpEnemyCardHolder = true;
           break;
         }
       case GameState.PLAYER_TURN:

@@ -201,28 +201,15 @@ export class Gameplay {
     //the board, then initiate the card battle sequence
     cardAndLocation.location.cardDisplay = CardDisplay.ENEMY;
     cardAndLocation.location.cardStats = cardAndLocation.card.cardStats;
+    cardAndLocation.location.compositeId.cardTypeId = cardAndLocation.card.compositeId.cardTypeId;
+    cardAndLocation.location.compositeId.uniqueId = cardAndLocation.card.compositeId.uniqueId;
+    cardAndLocation.location.compositeId.userSlot = cardAndLocation.card.compositeId.userSlot;
+
     removeCardFromHandById(cardAndLocation.card.compositeId.userSlot, this.opponentService.getOpponentCards());
 
     this.cardsPlayed++;
     this.battlePhase(cardAndLocation.location);
   }
-
-  // randomizeOpponentsTurn(oppentsCards: CardInfo[], gameBoard: CardInfo[]): {card: CardInfo, location: CardInfo} {
-  //   //The easiest mode to implement, there is no logic behind the opponent's moves, they simply
-  //   //play a random card in a random location of the board, regardless of arrow configurations
-  //   //or card stats.
-
-  //   //First pick a random card for the opponent
-  //   const playCard = oppentsCards[randomInteger(oppentsCards.length)];
-
-  //   //Next pick a random open slot on the board. Make this step easier
-  //   //by first filtering out all non-empty spaces.
-  //   const emptySpaces = gameBoard.filter(space => space.cardDisplay == CardDisplay.EMPTY);
-  //   let playSpace = emptySpaces[randomInteger(emptySpaces.length)];
-
-  //   //Return the selected card and board location
-  //   return {card: playCard, location: playSpace};
-  // }
 
   chooseOpponentAttackingCard(attackingCard: CardInfo, actionArray: (string | null)[]): (CardInfo | null) {
     //When the opponent plays a card, if multiple battles can arise from it, this method will choose which
@@ -383,8 +370,15 @@ export class Gameplay {
     //color.
 
     //Player cards will be ones where the userSlot is < 105, opponent cards have a userSlot >= 105
-    const orderedPlayerCards   = this.gameBoard.filter(space => space.compositeId.userSlot < 105).sort((a, b) => a.compositeId.userSlot - b.compositeId.userSlot);
-    const orderedOpponentCards = this.gameBoard.filter(space => space.compositeId.userSlot >= 105).sort((a, b) => a.compositeId.userSlot - b.compositeId.userSlot);
-    let x = 5;
+    const originalPlayerCards = this.gameBoard.filter(space => (space.compositeId.userSlot >= 100) && (space.compositeId.userSlot < 105)).sort((a, b) => a.compositeId.userSlot - b.compositeId.userSlot);
+    const originalOpponentCards = this.gameBoard.filter(space => space.compositeId.userSlot >= 105).sort((a, b) => a.compositeId.userSlot - b.compositeId.userSlot);
+
+    for (let card of originalPlayerCards) {
+      this.playerCards.push(card);
+    }
+
+    for (let card of originalOpponentCards) {
+      this.opponentService.addOpponentCard(card);
+    }
   }
 }

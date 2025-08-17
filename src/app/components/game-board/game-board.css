@@ -75,6 +75,13 @@ button:hover {
     margin-top: 0.5vh;
 }
 
+.face-up-enemy-card-holder {
+    transform: scale(0.827);
+    transform-origin: top left;
+    margin-top: 0.5vh;
+    width: 18.333vh;
+}
+
 .player-card-holder {
     transform: scale(0.827);
     transform-origin: top left;

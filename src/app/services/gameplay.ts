@@ -403,11 +403,21 @@ export class Gameplay {
 
   stealOpponentCard(card: CardInfo) {
     //When the player wins they get to steal a card from the opponent. Once the user selects the card
-    //it will be sent here where it can then be persisted.
-    this.opponentService.removeOpponentCard(card);
-    this.userService.moveCardsFromHandToDeck();
-    this.userService.addCardToUser(card);
-
+    //it will be sent here where it can then be persisted. If the user gets a perfect game against the 
+    //opponent then all of the opponent's cards are stolen.
+    if (this.getOpponentCardsOnBoard() == 0) {
+      for (let card of this.opponentService.getOpponentCards()) {
+        this.userService.addCardToCurrentHand(card);
+      }
+      this.userService.addCardsToUser(this.opponentService.getOpponentCards()); //persist in db
+      this.opponentService.clearOpponentCards();
+    } else {
+      this.userService.addCardToCurrentHand(card);
+      this.userService.addCardToUser(card); //persist in db
+      this.opponentService.removeOpponentCard(card);
+    }
+    
+    this.userService.moveCardsFromHandToDeck(); //put cards back in deck so they can be selected from home screen
     this.setAndEmitState(GameState.LEAVE_GAME);
   }
 }

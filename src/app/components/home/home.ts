@@ -66,7 +66,7 @@ export class Home implements OnInit {
         if (res == 1) {
           const userCards = this.userService.getUserCards();
           if (userCards) {
-            this.allCards = JSON.parse(JSON.stringify(userCards)); //make a deep copy of the cards to prevent accidentally overwriting anything TODO: Should make a reference copy eventually
+            this.allCards = userCards;
             this.selectedCards = this.userService.getCurrentUserCards();
             this.displayLoginModal = false;
           }
@@ -85,7 +85,6 @@ export class Home implements OnInit {
   }
 
   startNewGame() {
-    // this.gameService.setPlayerCards(this.selectedCards.map(e => e.info));
     this.gameService.setNewOpponent({skillLevel: 1, cardLevel: 0}); //TODO: Player should be able to pick opponent, set manually for now
     this.router.navigate(['/game']);
   }

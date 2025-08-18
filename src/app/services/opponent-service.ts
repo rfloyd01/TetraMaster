@@ -37,6 +37,13 @@ export class OpponentService {
     }
   }
 
+  clearOpponentCards() {
+    //removes all cards from the opponent's hand
+    while (this.opponentCards.length > 0) {
+      this.opponentCards.pop();
+    }
+  }
+
   stealPlayerCard(playerCards: CardInfo[]): CardInfo {
     //If the opponent wins a game then they get to steal one of the cards from 
     //the player which was converted during the game. Always opt to steal the 

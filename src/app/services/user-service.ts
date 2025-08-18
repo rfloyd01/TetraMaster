@@ -33,10 +33,10 @@ export class UserService {
 
   isTokenExpired(tokenString: string | null): boolean {
     if (tokenString) {
-      console.log(tokenString);
       const tokenValue = JSON.parse(atob(tokenString.split('.')[1]));
       const expirationInMs = tokenValue.exp * 1000;
 
+      console.log('Is token expired?: ' + (Date.now() > expirationInMs));
       return Date.now() > expirationInMs;
     }
 
@@ -111,6 +111,31 @@ export class UserService {
           if (!val) {
             //Something went wrong when trying to persist change in database, issue a warning.
             console.warn('Couldn\'t add card to user');
+          }
+        }
+      )
+    } else {
+      //Refresh the token and then persist the card
+    }
+    
+  }
+
+  addCardsToUser(cards: CardInfo[]) {
+    //Permenantly adds the card for the user and persists change in db
+    const token = this.getToken();
+
+    if (token) {
+      const addCardInfo: {cardStats: CardStats, cardType: number, cardId: number | undefined}[] = [];
+
+      for (let card of cards) {
+        addCardInfo.push({cardStats: card.cardStats, cardType: card.compositeId.cardTypeId, cardId: card.compositeId.uniqueId});
+      }
+
+      this.httpService.addCards(token, addCardInfo).subscribe(
+        val => {
+          if (!val) {
+            //Something went wrong when trying to persist change in database, issue a warning.
+            console.warn('Couldn\'t add cards to user');
           }
         }
       )

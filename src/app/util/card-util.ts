@@ -37,8 +37,8 @@ export function randomInteger(ceiling: number, floor?: number, ) {
     return randomNumber % range + floor;
 }
 
-export function removeCardFromHandById(id: number, hand: CardInfo[]) {
-    const index = hand.findIndex(item => item.id === id);
+export function removeCardFromHandByUserSlotId(id: number, hand: CardInfo[]) {
+    const index = hand.findIndex(item => item.compositeId.userSlot === id);
     if (index !== -1) {
         hand.splice(index, 1);
     }

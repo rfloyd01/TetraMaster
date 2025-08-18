@@ -15,7 +15,7 @@ export const CARD_TIMER_LENGTH: number = 1500; //Time in ms for timer to expire
 export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked {
   
   @Input()
-  id: number = 0; //unique number to distinguish from other cards on map
+  id: number = 0; //unique number to distinguish from other cards on board, used for CSS styling
 
   @Input()
   cardType: number = 0; //0 = wolf, 1 = goblin ... 67 = genji, etc.

@@ -3,7 +3,7 @@ import { Card } from '../card/card';
 import { AttackStyle, CardDisplay, CardInfo } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 import { Gameplay } from '../../services/gameplay';
-import { cardinalDirectionNeighbor, createDefaultStats, createDefaultStatsWithRandomArrows, createRandomStats, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../../util/card-util';
+import { cardinalDirectionNeighbor, createDefaultStats, createDefaultStatsWithRandomArrows, createRandomStats, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandByUserSlotId } from '../../util/card-util';
 import { GameState } from '../../util/gameplay-types';
 import { interval, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
@@ -22,9 +22,9 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
   cardDisplay = CardDisplay;
 
   //Card Arrays
-  gridCards!: CardInfo[];
-  playerCards!: CardInfo[];
-  opponentCards!: CardInfo[];
+  gridCards: CardInfo[] = [];
+  playerCards: CardInfo[] = [];
+  opponentCards: CardInfo[] = [];
 
   //State Variables
   selectedCard!: CardInfo | null;
@@ -83,6 +83,7 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
     this.createRandomBoard();
     this.createPlayerCards();
     this.gameplayService.startNewGame();
+    this.gridCards = this.gameplayService.getGameBoard();
   }
 
   quit() {
@@ -90,9 +91,9 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
   }
 
   resetGameVariables() {
-    this.gridCards = [];
-    this.playerCards = [];
-    this.opponentCards = [];
+    // this.gridCards = [];
+    // this.playerCards = [];
+    // this.opponentCards = [];
 
     this.selectedCard = null;
     this.playerCanMove = false;
@@ -121,7 +122,12 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
     //array. These cards will eventually have their stats overriden by player cards.
     for (let i: number = 0; i < 16; i++) {
       this.gridCards.push({
-        id: i,
+        compositeId: {
+          boardLocation: i,
+          uniqueId: 0,
+          userSlot: 0,
+          cardTypeId: 0
+        },
         cardStats: createDefaultStats(),
         isSelected: false,
         cardDisplay: (assignedBlockers & (1 << i)) ? CardDisplay.BLOCKED : CardDisplay.EMPTY,
@@ -133,9 +139,9 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
   createPlayerCards() {
     //Generate 10 cards with randomized stats and give them to the player and opponent
     for (let i:number = 0; i < 5; i++) {
-      this.opponentCards.push({id: i + 100, cardStats: createDefaultStatsWithRandomArrows(), isSelected: false, cardDisplay: CardDisplay.ENEMY, cardText: ''});
+      this.opponentCards.push({compositeId: {boardLocation: 0, userSlot: i + 100, uniqueId: 0, cardTypeId: 0}, cardStats: createDefaultStatsWithRandomArrows(), isSelected: false, cardDisplay: CardDisplay.ENEMY, cardText: ''});
       // this.opponentCards.push({id: i + 100, cardStats: createRandomStats(), isSelected: false, cardDisplay: CardDisplay.ENEMY, cardText: ''});
-      this.playerCards.push({id: i + 105, cardStats: createRandomStats(), isSelected: false, cardDisplay: CardDisplay.FRIEND, cardText: ''});
+      this.playerCards.push({compositeId: {boardLocation: 0, userSlot: i + 105, uniqueId: 0, cardTypeId: 0}, cardStats: createRandomStats(), isSelected: false, cardDisplay: CardDisplay.FRIEND, cardText: ''});
     }
   }
 
@@ -143,16 +149,16 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
     //Don't let the player select a card if it isn't their turn
     let eligibleCards: CardInfo[] | null = null;
 
-    if (this.playerCanMove && card.id >= 105) {
+    if (this.playerCanMove && card.compositeId.userSlot >= 105) {
       eligibleCards = this.playerCards;
-    } else if(this.opponentCanMove && card.id < 105) {
+    } else if(this.opponentCanMove && card.compositeId.userSlot < 105) {
       eligibleCards = this.opponentCards;
     }
 
     if (eligibleCards != null) {
       //First iterate over all other cards in the player's hand and make sure they're deselected
       for (let eligibleCard of eligibleCards) {
-        if (eligibleCard.id != card.id && eligibleCard.isSelected) {
+        if (eligibleCard.compositeId.userSlot != card.compositeId.userSlot && eligibleCard.isSelected) {
           eligibleCard.isSelected = false; //only set if current value is true
         }
       }
@@ -179,15 +185,21 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
       this.gridCards[gridIndex].cardStats = this.selectedCard.cardStats;
       this.gridCards[gridIndex].isSelected = false;
 
+      //Copy the composite id of the played card to the grid card, with the exception of the board location
+      //(this variable is used for CSS purposes and needs to remain the same)
+      this.gridCards[gridIndex].compositeId.cardTypeId = this.selectedCard.compositeId.cardTypeId;
+      this.gridCards[gridIndex].compositeId.uniqueId = this.selectedCard.compositeId.uniqueId;
+      this.gridCards[gridIndex].compositeId.userSlot = this.selectedCard.compositeId.userSlot;
+
       //Remove the card from the player's hand
-      removeCardFromHandById(this.selectedCard.id, this.playerCanMove ? this.playerCards : this.opponentCards);
+      removeCardFromHandByUserSlotId(this.selectedCard.compositeId.userSlot, this.playerCanMove ? this.playerCards : this.opponentCards);
       this.selectedCard = null;
 
       //If a multi-battle scenario pops up, lock player out from selecting another card mid-turn
       this.playerCanMove = false;
 
       //After placing card on board and removing from hand, initiate game play sequence
-      this.gameplayService.playerTurn(this.gridCards[gridIndex], this.gridCards);
+      this.gameplayService.playerTurn(this.gridCards[gridIndex]);
     } 
   }
 
@@ -202,16 +214,17 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
 
     let fauxActionArray: (string | null)[] = [];
     let addBattleString;
+    const currentBattleCardLocation = currentBattleCard.compositeId.boardLocation;
     for (let i = 0; i < 8; i++) {
       addBattleString = false;
-      if (checkForNeighboringCard(currentBattleCard.id, ORDERED_CARDINAL_DIRECTIONS[i], this.gridCards, this.gridCards[gridIndex].cardDisplay)) {
-        if ((gridIndex - currentBattleCard.id) == cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])) {
+      if (checkForNeighboringCard(currentBattleCardLocation, ORDERED_CARDINAL_DIRECTIONS[i], this.gridCards, this.gridCards[gridIndex].cardDisplay)) {
+        if ((gridIndex - currentBattleCardLocation) == cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])) {
           addBattleString = true;
         }
 
         //Remove any text displayed on each of the neighboring cards
-        if (this.gridCards[currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText != '') {
-          this.gridCards[currentBattleCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText = '';
+        if (this.gridCards[currentBattleCardLocation + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText != '') {
+          this.gridCards[currentBattleCardLocation + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText = '';
         }
       }
 
@@ -224,7 +237,7 @@ export class TestGameboardComponent implements OnInit, OnDestroy {
 
     //Initiate the selected battle, regardless of outcome of this battle the current battle card is set
     //back to a null value
-    this.gameplayService.battlePhase(currentBattleCard, this.gridCards, fauxActionArray);
+    this.gameplayService.battlePhase(currentBattleCard, fauxActionArray);
   }
 
   advanceGame(state: GameState) {

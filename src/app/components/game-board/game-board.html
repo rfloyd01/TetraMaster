@@ -1,14 +1,30 @@
 <button class="new-game-button" *ngIf="displayButtons" (click)="startNewGame()">Play Again</button>
 <button class="quit-button" *ngIf="displayButtons" (click)="quit()">Quit</button>
 <div class="card-board">
-    <div class="enemy-card-holder">
-        <app-card *ngFor="let card of opponentCards; let i = index"
-        [ngClass]="'slot-' + i"
-        [id]="card.id"
-        [cardDisplay]="card.cardDisplay"
-        [cardStats]="card.cardStats"></app-card>
+    <div>
+        <div *ngIf="!faceUpEnemyCardHolder" class="enemy-card-holder">
+            <app-card *ngFor="let card of opponentCards; let i = index"
+            [ngClass]="'slot-' + i"
+            [id]="card.compositeId.userSlot"
+            [cardDisplay]="card.cardDisplay"
+            [cardStats]="card.cardStats"></app-card>
+            <div class="big-num-top">{{opponentCardsOnBoard}}</div>
+            <div class="big-num-bot">{{playerCardsOnBoard}}</div>
+            <div class="number-divider">
+                <img src="assets/number-divider.png" alt="assets/number-divider.png" />
+            </div>
+        </div>
+        
+        <div *ngIf="faceUpEnemyCardHolder" class="face-up-enemy-card-holder">
+            <app-card *ngFor="let card of opponentCards"
+            [id]="card.compositeId.userSlot"
+            [cardDisplay]="card.cardDisplay"
+            [cardStats]="card.cardStats"
+            [isSelected]="card.isSelected"
+            (click)="selectPlayerCard(card)"></app-card>
+        </div>
     </div>
-    <div class="card-grid">
+    <div *ngIf="displayBoard" class="card-grid">
         <div *ngIf="showCoin"  class="coin-image">
             <img [src]="coinImagePrefix + coinImageNumber + coinImageType" [alt]="coinImagePrefix + coinImageNumber + coinImageType" />
         </div>
@@ -22,7 +38,7 @@
     </div>
     <div class="player-card-holder">
         <app-card *ngFor="let card of playerCards"
-        [id]="card.id"
+        [id]="card.compositeId.userSlot"
         [cardDisplay]="card.cardDisplay"
         [cardStats]="card.cardStats"
         [isSelected]="card.isSelected"

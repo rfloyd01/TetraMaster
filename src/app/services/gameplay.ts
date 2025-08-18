@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { AttackStyle, CardDisplay, CardInfo, CardStats } from '../util/card-types';
-import { cardinalDirectionNeighbor, cardinalDirectionToIndex, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandById } from '../util/card-util';
+import { cardinalDirectionNeighbor, cardinalDirectionToIndex, createDefaultStats, ORDERED_CARDINAL_DIRECTIONS, randomInteger, removeCardFromHandByUserSlotId } from '../util/card-util';
 import { CARD_TIMER_INITIAL_DISPLAY, CARD_TIMER_LENGTH } from '../components/card/card';
 import { BehaviorSubject } from 'rxjs';
 import { BattleResult, GameState, Opponent } from '../util/gameplay-types';
 import { OpponentService } from './opponent-service';
 import { generateActionArray } from '../util/gameplay-utils';
+import { UserService } from './user-service';
 
 @Injectable({
   providedIn: 'root'
@@ -20,22 +21,16 @@ export class Gameplay {
   currentState: GameState = GameState.GAME_START;
   cardsPlayed: number = 0;
 
-  playerCards!: CardInfo[];
+  gameBoard!: CardInfo[];
 
   attackingCard!: CardInfo | null;
   defendingCard!: CardInfo | null;
 
-  constructor(private readonly opponentService:OpponentService) {}
+  constructor(private readonly opponentService: OpponentService, private readonly userService: UserService) {}
 
   private setAndEmitState(state: GameState) {
     this.currentState = state;
     this.gameplayUpdate.next(this.currentState);
-  }
-
-  setPlayerCards(cards: CardInfo[]) {
-    //When the player has selected their cards from the home screen and hit the 'New Game'
-    //button, their cards will be set in the service and then injected into the game
-    this.playerCards = cards;
   }
 
   setNewOpponent(opponent: Opponent) {
@@ -43,17 +38,67 @@ export class Gameplay {
   }
 
   getPlayerCards() {
-    return this.playerCards
+    return this.userService.getCurrentUserCards();
   }
 
   getOpponentCards() {
     return this.opponentService.getOpponentCards();
   }
 
+  getGameBoard() {
+    return this.gameBoard;
+  }
+
+  getOpponentCardsOnBoard() {
+    return this.gameBoard.filter(card => card.cardDisplay == CardDisplay.ENEMY).length;
+  }
+
+  getPlayerCardsOnBoard() {
+    return this.gameBoard.filter(card => card.cardDisplay == CardDisplay.FRIEND).length;
+  }
+
   startNewGame() {
     //Initialize variables with default values, generate opponent cards and then emit the Game Start state
     this.opponentService.generateOpponentCards();
+    this.createRandomBoard();
+
     this.setAndEmitState(GameState.GAME_START);
+  }
+
+  createRandomBoard() {
+    //First generate a random number between 0 and 6, this will represent how many slots
+    //in the board are blocked off.
+    this.gameBoard = [];
+    const blockers = randomInteger(6);
+
+    //Randomly assign the blockers
+    let assignedBlockers:number = 0b0;
+    for (let i:number = 0; i < blockers; i++) {
+      while (true) {
+        const blockerLocation = randomInteger(16);
+        if (!(assignedBlockers & (1 << blockerLocation))) {
+          assignedBlockers |= (1 << blockerLocation);
+          break;
+        }
+      }
+    }
+
+    //Once blockers are assigned create cards and place them into the grid
+    //array. These cards will eventually have their stats overriden by player cards.
+    for (let i: number = 0; i < 16; i++) {
+      this.gameBoard.push({
+        compositeId: {
+          boardLocation: i,
+          uniqueId: 0,
+          userSlot: 0,
+          cardTypeId: 0
+        },
+        cardStats: createDefaultStats(),
+        isSelected: false,
+        cardDisplay: (assignedBlockers & (1 << i)) ? CardDisplay.BLOCKED : CardDisplay.EMPTY,
+        cardText: ''
+      });
+    }
   }
 
   coinFlip() {
@@ -71,6 +116,7 @@ export class Gameplay {
   advanceToNextState() {
     if (this.cardsPlayed == 10) {
       this.cardsPlayed = 0;
+      this.putCardsBackIntoOriginalHands();
       this.setAndEmitState(GameState.GAME_END);
     } else if (this.currentState == GameState.PLAYER_TURN || this.currentState == GameState.PLAYER_SELECT_BATTLE) {
       this.setAndEmitState(GameState.OPPONENT_TURN);
@@ -79,7 +125,7 @@ export class Gameplay {
     }
   }
 
-  battlePhase(playedCard: CardInfo, gameBoard: CardInfo[], actionArray?:(string | null)[]) {
+  battlePhase(playedCard: CardInfo, actionArray?:(string | null)[]) {
     //This method get's called after the player puts a card onto the board. It will handle
     //Battles, capturing of enemy cards, etc. before advancing the game to the next state.
     if (playedCard == null) {
@@ -88,12 +134,12 @@ export class Gameplay {
     }
 
     this.attackingCard = playedCard;
-    actionArray ??= generateActionArray(playedCard.cardStats, playedCard.id, playedCard.cardDisplay, gameBoard, false); //generate action array before battle phase
-    const result = this.initiateCardBattles(gameBoard, actionArray);
+    actionArray ??= generateActionArray(playedCard.cardStats, playedCard.compositeId.boardLocation, playedCard.cardDisplay, this.gameBoard, false); //generate action array before battle phase
+    const result = this.initiateCardBattles(actionArray);
 
     if (result == BattleResult.NO_BATTLE) {
       //If no battle occured then simply update the state, take any defenseless cards, and update the game state
-      this.captureDefenselessCards(this.attackingCard, actionArray, gameBoard);
+      this.captureDefenselessCards(this.attackingCard, actionArray);
       this.attackingCard = null; //reset the attacking card
       this.advanceToNextState();
     } else if ((this.currentState == GameState.PLAYER_TURN) && (result == BattleResult.NEED_PLAYER_INPUT)) {
@@ -108,24 +154,24 @@ export class Gameplay {
           if (result != BattleResult.LOST_BATTLE) {
             //The player won the fight. Take over the enemy card as well as any chained cards.
             this.defendingCard.cardDisplay = this.attackingCard.cardDisplay;
-            let chainedCards = generateActionArray(this.defendingCard.cardStats, this.defendingCard.id, this.defendingCard.cardDisplay, gameBoard, true);
-            this.captureDefenselessCards(this.defendingCard, chainedCards, gameBoard);
-            this.captureDefenselessCards(this.attackingCard, actionArray, gameBoard);
+            let chainedCards = generateActionArray(this.defendingCard.cardStats, this.defendingCard.compositeId.boardLocation, this.defendingCard.cardDisplay, this.gameBoard, true);
+            this.captureDefenselessCards(this.defendingCard, chainedCards);
+            this.captureDefenselessCards(this.attackingCard, actionArray);
             
             //If the current state of the game is 'player select battle'
             //then it's possible there are more battles to carry out. Recursively call this method
             //with the same card but a null action array to continue
             //if (this.currentState == GameState.PLAYER_SELECT_BATTLE) {
             if (result == BattleResult.NEED_PLAYER_INPUT) {
-              this.battlePhase(playedCard, gameBoard);
+              this.battlePhase(playedCard);
               return; //state emission will happen at lower recursion level so simply return
             } 
           } else {
             //The attacking card lost the fight so it gets converted to the other team and
             //chaining happens
             this.attackingCard.cardDisplay = this.defendingCard.cardDisplay;
-            let chainedCards = generateActionArray(this.attackingCard.cardStats, this.attackingCard.id, this.attackingCard.cardDisplay, gameBoard, true);
-            this.captureDefenselessCards(this.attackingCard, chainedCards, gameBoard);
+            let chainedCards = generateActionArray(this.attackingCard.cardStats, this.attackingCard.compositeId.boardLocation, this.attackingCard.cardDisplay, this.gameBoard, true);
+            this.captureDefenselessCards(this.attackingCard, chainedCards);
           }
         } else {
           console.warn('Attack or defense card was\'t set');
@@ -139,49 +185,36 @@ export class Gameplay {
     } 
   }
 
-  playerTurn(playedCard: CardInfo, gameBoard: CardInfo[]) {
+  playerTurn(playedCard: CardInfo) {
     //Since the player chooses their own card there isn't any extra logic to do.
     //Simply increment the cards played counter and start the battle phase.
     this.cardsPlayed++;
-    this.battlePhase(playedCard, gameBoard);
+    this.battlePhase(playedCard);
   }
 
-  opponentsTurn(gameBoard: CardInfo[]): void {
+  opponentsTurn(): void {
     //This method holds the logic for making the opponent's move. What the opponent does with 
     //their turn will be a factor of the cards that they have, the cards currently on the board,
     //and the selected skill level of the opponent.
 
     //First, select the card to play and the grid space to play it in
-    let cardAndLocation = this.opponentService.makeMove(gameBoard);
+    let cardAndLocation = this.opponentService.makeMove(this.gameBoard);
 
     //Afterpicking the card remove it from the opponent's hand, add it to 
     //the board, then initiate the card battle sequence
     cardAndLocation.location.cardDisplay = CardDisplay.ENEMY;
     cardAndLocation.location.cardStats = cardAndLocation.card.cardStats;
-    removeCardFromHandById(cardAndLocation.card.id, this.opponentService.getOpponentCards());
+    cardAndLocation.location.compositeId.cardTypeId = cardAndLocation.card.compositeId.cardTypeId;
+    cardAndLocation.location.compositeId.uniqueId = cardAndLocation.card.compositeId.uniqueId;
+    cardAndLocation.location.compositeId.userSlot = cardAndLocation.card.compositeId.userSlot;
+
+    removeCardFromHandByUserSlotId(cardAndLocation.card.compositeId.userSlot, this.opponentService.getOpponentCards());
 
     this.cardsPlayed++;
-    this.battlePhase(cardAndLocation.location, gameBoard);
+    this.battlePhase(cardAndLocation.location);
   }
 
-  randomizeOpponentsTurn(oppentsCards: CardInfo[], gameBoard: CardInfo[]): {card: CardInfo, location: CardInfo} {
-    //The easiest mode to implement, there is no logic behind the opponent's moves, they simply
-    //play a random card in a random location of the board, regardless of arrow configurations
-    //or card stats.
-
-    //First pick a random card for the opponent
-    const playCard = oppentsCards[randomInteger(oppentsCards.length)];
-
-    //Next pick a random open slot on the board. Make this step easier
-    //by first filtering out all non-empty spaces.
-    const emptySpaces = gameBoard.filter(space => space.cardDisplay == CardDisplay.EMPTY);
-    let playSpace = emptySpaces[randomInteger(emptySpaces.length)];
-
-    //Return the selected card and board location
-    return {card: playCard, location: playSpace};
-  }
-
-  chooseOpponentAttackingCard(attackingCard: CardInfo, actionArray: (string | null)[], board: CardInfo[]): (CardInfo | null) {
+  chooseOpponentAttackingCard(attackingCard: CardInfo, actionArray: (string | null)[]): (CardInfo | null) {
     //When the opponent plays a card, if multiple battles can arise from it, this method will choose which
     //card the opponent will choose to attack first. The choice will depend on the current level of the
     //opponent.
@@ -192,7 +225,7 @@ export class Gameplay {
     let defendingCards: CardInfo[] = [];
     for (let i:number = 0; i < 8; i++) {
       if (actionArray[i] == 'battle') {
-        defendingCards.push(board[attackingCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])]);
+        defendingCards.push(this.gameBoard[attackingCard.compositeId.boardLocation + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])]);
       }
     }
 
@@ -208,7 +241,7 @@ export class Gameplay {
     return null;
   }
 
-  initiateCardBattles(board: CardInfo[], actionArray:(string | null)[]): BattleResult {
+  initiateCardBattles(actionArray:(string | null)[]): BattleResult {
     //Return values for this method:
     //-2: error
     //-1: require player input to continue
@@ -235,9 +268,9 @@ export class Gameplay {
     if (battleCount == 1) {
       //Carry out the single battle
       const defendingCardDirection = ORDERED_CARDINAL_DIRECTIONS[actionArray.indexOf('battle')];
-      this.defendingCard = board[this.attackingCard.id + cardinalDirectionNeighbor(defendingCardDirection)];
+      this.defendingCard = this.gameBoard[this.attackingCard.compositeId.boardLocation + cardinalDirectionNeighbor(defendingCardDirection)];
 
-      if (this.handleCardBattle(this.attackingCard, this.defendingCard) == this.attackingCard.id) {
+      if (this.handleCardBattle(this.attackingCard, this.defendingCard) == this.attackingCard.compositeId.boardLocation) {
         battleWon = true;
       } else {
         //The attacking card has lost, convert it to the other team and return from this method
@@ -254,17 +287,17 @@ export class Gameplay {
         //that we're still in the battle phase
         for (let i:number = 0; i < 8; i++) {
           if (actionArray[i] == 'battle') {
-            board[this.attackingCard.id + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText = 'Select a Card';
+            this.gameBoard[this.attackingCard.compositeId.boardLocation + cardinalDirectionNeighbor(ORDERED_CARDINAL_DIRECTIONS[i])].cardText = 'Select a Card';
           }
         }
       } else {
-        this.defendingCard = this.chooseOpponentAttackingCard(this.attackingCard, actionArray, board);
+        this.defendingCard = this.chooseOpponentAttackingCard(this.attackingCard, actionArray);
 
         if (!this.defendingCard) {
           return BattleResult.ERROR; //indicates that there was some error in picking a card to attack
         }
 
-        if (this.handleCardBattle(this.attackingCard, this.defendingCard) != this.attackingCard.id) {
+        if (this.handleCardBattle(this.attackingCard, this.defendingCard) != this.attackingCard.compositeId.boardLocation) {
           return BattleResult.LOST_BATTLE;
         } 
       }
@@ -299,7 +332,7 @@ export class Gameplay {
     this.setBattleAnimation(attackingCard, attackingCard.cardStats.attackPower, attackDiff);
     this.setBattleAnimation(defendingCard, defense, defenseDiff);
 
-    return (attackDiff > defenseDiff) ? attackingCard.id : defendingCard.id;
+    return (attackDiff > defenseDiff) ? attackingCard.compositeId.boardLocation : defendingCard.compositeId.boardLocation;
   }
 
   getDefenseiveNumber(attackType: AttackStyle, defendingCardStats:CardStats): number {
@@ -311,11 +344,11 @@ export class Gameplay {
     }
   }
 
-  captureDefenselessCards(capturingCard: CardInfo, neighboringCards: (string | null)[], board: CardInfo[]) {
+  captureDefenselessCards(capturingCard: CardInfo, neighboringCards: (string | null)[]) {
     for (let cardinalDirection of ORDERED_CARDINAL_DIRECTIONS) {
       const text = neighboringCards[cardinalDirectionToIndex(cardinalDirection)];
       if (text == 'capture' || text == 'chain') {
-        board[capturingCard.id + cardinalDirectionNeighbor(cardinalDirection)].cardDisplay = capturingCard.cardDisplay;
+        this.gameBoard[capturingCard.compositeId.boardLocation + cardinalDirectionNeighbor(cardinalDirection)].cardDisplay = capturingCard.cardDisplay;
       }
     }
   }
@@ -330,5 +363,61 @@ export class Gameplay {
     setTimeout(() => {
       card.cardText = ''; //Reset text in gameplay context, card component will handle updating timer text itself
     }, CARD_TIMER_LENGTH  + CARD_TIMER_INITIAL_DISPLAY + 5); //delay this update until after timer is complete
+  }
+
+  putCardsBackIntoOriginalHands() {
+    //When the game is over the winner gets to steal one of the cards from the loser. 
+    //The computer player will obviously do this automatically, but to make things easier for 
+    //the player to decide, all cards are returned back into their original location in 
+    //the player and opponent's hands. Any card that has been turned will keep it's new 
+    //color.
+
+    //Player cards will be ones where the userSlot is < 105, opponent cards have a userSlot >= 105
+    const originalOpponentCards = this.gameBoard.filter(space => (space.compositeId.userSlot >= 100) && (space.compositeId.userSlot < 105)).sort((a, b) => a.compositeId.userSlot - b.compositeId.userSlot);
+    const originalPlayerCards = this.gameBoard.filter(space => space.compositeId.userSlot >= 105).sort((a, b) => a.compositeId.userSlot - b.compositeId.userSlot);
+
+    for (let card of originalPlayerCards) {
+      this.userService.addCardToCurrentHand(card);
+    }
+
+    for (let card of originalOpponentCards) {
+      this.opponentService.addOpponentCard(card);
+    }
+  }
+
+  stealPlayerCard() {
+    //If the opponent wins the game they get to steal one of the players cards. This change is permanent
+    //and will be persisted in the database. In the case that the opponent has a perfect game, then the 
+    //player will lose all 5 of the cards they used in the game.
+    if (this.getPlayerCardsOnBoard() == 0) {
+      this.userService.removeCurrentHandFromUser();
+    } else {
+      let removalCard = this.opponentService.stealPlayerCard(this.userService.getCurrentUserCards());
+      console.log(removalCard);
+      this.userService.removeCardFromUser(removalCard);
+    }
+
+    this.userService.moveCardsFromHandToDeck();
+    this.setAndEmitState(GameState.LEAVE_GAME);
+  }
+
+  stealOpponentCard(card: CardInfo) {
+    //When the player wins they get to steal a card from the opponent. Once the user selects the card
+    //it will be sent here where it can then be persisted. If the user gets a perfect game against the 
+    //opponent then all of the opponent's cards are stolen.
+    if (this.getOpponentCardsOnBoard() == 0) {
+      for (let card of this.opponentService.getOpponentCards()) {
+        this.userService.addCardToCurrentHand(card);
+      }
+      this.userService.addCardsToUser(this.opponentService.getOpponentCards()); //persist in db
+      this.opponentService.clearOpponentCards();
+    } else {
+      this.userService.addCardToCurrentHand(card);
+      this.userService.addCardToUser(card); //persist in db
+      this.opponentService.removeOpponentCard(card);
+    }
+    
+    this.userService.moveCardsFromHandToDeck(); //put cards back in deck so they can be selected from home screen
+    this.setAndEmitState(GameState.LEAVE_GAME);
   }
 }

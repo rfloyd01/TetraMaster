@@ -36,7 +36,7 @@ export interface CardStats {
 
 export interface CardInfo {
     //Holds info about specific cards on the game board / home screen
-    id: number; //refers to specific location on screen (i.e. top left of game board = 0, bottom right = 15)
+    compositeId: CardId;
     cardStats: CardStats;
     isSelected: boolean;
     cardDisplay: CardDisplay;
@@ -53,6 +53,15 @@ export interface CardType {
     maxAtt: number;
     maxPDef: number;
     maxMDef: number;
+}
+
+export interface CardId {
+    //There are multiple different ids that can be tied to a single card so this
+    //class acts as a composite id to help keep track of everything about the card
+    boardLocation: number; //where the card currently is on the gameboard
+    userSlot: number; //where the card started in either users hand (100-104 for opponent and 105-109 for player)
+    uniqueId?: number; //used to differentiate cards owned by the player (matches database id for a given card)
+    cardTypeId: number; //tells what kind of card it is
 }
 
 //Interface for receiving user card info from back end

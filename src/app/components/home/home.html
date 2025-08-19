@@ -50,6 +50,7 @@
                             [id]="i + 5"
                             [cardDisplay]="cardDisplay.FRIEND"
                             [cardStats]="card.cardStats"
+                            [cardType]="card.compositeId.cardTypeId"
                             [isSelected]="false"></app-card>
                             <button class="left-arrow-button" *ngIf="highlightedCards.length > 1" (click)="shuffleHighlightedCards('ArrowLeft')">&lt;-</button>
                             <button class="right-arrow-button" *ngIf="highlightedCards.length > 1" (click)="shuffleHighlightedCards('ArrowRight')">-&gt;</button>

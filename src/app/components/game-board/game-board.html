@@ -7,6 +7,7 @@
             [ngClass]="'slot-' + i"
             [id]="card.compositeId.userSlot"
             [cardDisplay]="card.cardDisplay"
+            [cardType]="card.compositeId.cardTypeId"
             [cardStats]="card.cardStats"></app-card>
             <div class="big-num-top">{{opponentCardsOnBoard}}</div>
             <div class="big-num-bot">{{playerCardsOnBoard}}</div>
@@ -21,6 +22,7 @@
             [cardDisplay]="card.cardDisplay"
             [cardStats]="card.cardStats"
             [isSelected]="card.isSelected"
+            [cardType]="card.compositeId.cardTypeId"
             (click)="selectPlayerCard(card)"></app-card>
         </div>
     </div>
@@ -33,6 +35,7 @@
             [cardDisplay]="gridCards[4 * i + j].cardDisplay"
             [cardStats]="gridCards[4 * i + j].cardStats"
             [cardText]="gridCards[4 * i + j].cardText"
+            [cardType]="gridCards[4 * i + j].compositeId.cardTypeId"
             (click)="handleSelection(4 * i + j, selectionType)"></app-card>
         </div>
     </div>
@@ -42,6 +45,7 @@
         [cardDisplay]="card.cardDisplay"
         [cardStats]="card.cardStats"
         [isSelected]="card.isSelected"
+        [cardType]="card.compositeId.cardTypeId"
         (click)="selectPlayerCard(card)"></app-card>
     </div>
 </div>

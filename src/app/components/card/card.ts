@@ -1,7 +1,8 @@
 import { AfterViewChecked, AfterViewInit, Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { CardDisplay, CardStats } from '../../util/card-types';
+import { CARD_TYPES, CardDisplay, CardStats } from '../../util/card-types';
 import { CommonModule } from '@angular/common';
 import { interval, Subscription } from 'rxjs';
+import { toLowerCaseWithouSpaces } from '../../util/general-utils';
 
 export const CARD_TIMER_INITIAL_DISPLAY: number = 300; //Time in ms to show first number before starting countdown
 export const CARD_TIMER_LENGTH: number = 1500; //Time in ms for timer to expire
@@ -214,4 +215,13 @@ export class Card implements OnInit, AfterViewInit, OnChanges, AfterViewChecked 
     }, CARD_TIMER_INITIAL_DISPLAY);
     
   }
+
+  getCardImage():string {
+    const cardName = toLowerCaseWithouSpaces(CARD_TYPES[this.cardType].name);
+    return 'assets/card_pictures/' + cardName + '.png';
+  }
+
+  onImageError(event: Event) {
+  (event.target as HTMLImageElement).src = 'assets/card_pictures/empty.png';
+}
 }

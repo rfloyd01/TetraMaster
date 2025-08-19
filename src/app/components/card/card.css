@@ -29,6 +29,7 @@
     font-size: 2.64vh;
     font-style: normal;
     color: whitesmoke;
+    z-index: 1;
 }
 
 .card-back {
@@ -38,6 +39,22 @@
 }
 
 .card-back img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-image {
+    position: absolute;
+    bottom: 50%;
+    transform: translate(0%, 40%);
+    width: 75%;
+    height: 75%;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.card-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;

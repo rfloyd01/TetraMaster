@@ -397,6 +397,7 @@ export class Gameplay {
       this.userService.removeCardFromUser(removalCard);
     }
 
+    this.resetCardDisplays();
     this.userService.moveCardsFromHandToDeck();
     this.setAndEmitState(GameState.LEAVE_GAME);
   }
@@ -417,6 +418,27 @@ export class Gameplay {
       this.opponentService.removeOpponentCard(card);
     }
     
+    this.resetCardDisplays();
+    this.userService.moveCardsFromHandToDeck(); //put cards back in deck so they can be selected from home screen
+    this.setAndEmitState(GameState.LEAVE_GAME);
+  }
+
+  resetCardDisplays() {
+    //when the game is over and the winner has stolen their card(s), there may still be some cards
+    //that were flipped during the game which need to have their background colors changed back.
+    for (let card of this.userService.getCurrentUserCards()) {
+      card.cardDisplay = CardDisplay.FRIEND;
+    }
+
+    for (let card of this.opponentService.getOpponentCards()) {
+      card.cardDisplay = CardDisplay.BACK;
+    }
+  }
+
+  endGame() {
+    //A way to manually end the game, for example, if there's a tie and no player
+    //gets to steal any cards this method can be used to skip the card stealing step
+    this.resetCardDisplays();
     this.userService.moveCardsFromHandToDeck(); //put cards back in deck so they can be selected from home screen
     this.setAndEmitState(GameState.LEAVE_GAME);
   }

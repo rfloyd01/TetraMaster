@@ -29,8 +29,12 @@
         </div>
 
         <div class="card-text">{{cardText}}</div>
+        <div class="card-image">
+            <img [src]="getCardImage()" alt="monster image" (error)="onImageError($event)" />
+        </div>
     </div>
     <div *ngIf="displayBack" class="card-back">
         <img src="assets/card_back.png" alt="assets/favicon.png" />
     </div>
+    
 </div>

@@ -255,7 +255,6 @@ export class GameBoard implements OnInit, OnDestroy {
         }
       case GameState.GAME_END:
         {
-          // this.displayButtons = true;
           this.faceUpEnemyCardHolder = true;
           this.displayBoard = false;
 
@@ -263,6 +262,8 @@ export class GameBoard implements OnInit, OnDestroy {
             this.gameplayService.stealPlayerCard();
           } else if (this.playerCardsOnBoard > this.opponentCardsOnBoard) {
             this.selectionType = 2; //allows player to select card from opponent's hand
+          } else {
+            this.gameplayService.endGame();
           }
 
           break;
